@@ -1,3 +1,3 @@
 25/11 - 
 Succeded installing pip3 and pyftpdlib on the Odroid with Ubuntu Mate.
-Created a simple FTP server using pyftpdlib and transfered file to/from the server.
+Created a simple FTP server using pyftpdlib and transfered file to/from the server using curl -O and curl -T.
