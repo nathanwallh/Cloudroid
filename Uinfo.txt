@@ -1,14 +1,14 @@
-AddUser{
+{
 nathan
 1234
 }
 
-AddUser{
+{
 oren
 1101
 }
 
-AddUser{
+{
 satan
 666
 }
