@@ -1,0 +1,2 @@
+1. Create a setup script named "SetupServer" that an administrator will run. The script will give interface for:
+- Adding and deleting users of the server(including their files and directories).
