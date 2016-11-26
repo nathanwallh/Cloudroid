@@ -1,3 +1,5 @@
 25/11 - 
 Succeded installing pip3 and pyftpdlib on the Odroid with Ubuntu Mate.
 Created a simple FTP server using pyftpdlib and transfered file to/from the server using curl -O and curl -T.
+26/11 -
+Server users are now added from the text file "Uinfo.txt" and directories will be created for them.
