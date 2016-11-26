@@ -5,8 +5,21 @@ from os import path
 from Uinfo import getUsers
 from Uinfo import compileUsers
 
-introduction = """SetupServer.py
+def deldirs( dirlist ):
+    for x in dirlist:
+        if path.exists( x ):
+            rmtree( x )
+
+
+
+introduction = """
+######################
+SetupServer.py
 Setup the FTP server.
+######################
+
+OPTIONS:
+--------
 
 -delall 
     Delete all users.
@@ -17,17 +30,19 @@ Setup the FTP server.
 -add (<username1>,<password1>) (<username2>,<password2>) ...
     Add users.
 """
-
 if len(argv) == 1:
     print( introduction )
     exit()
 
+
+
 if argv[1] == "-delall":
+    uinfo = getUsers()
+    deldirs( [ user.get('username') for user in uinfo ] )
     open("Uinfo.txt", "w").close()
 elif argv[1] == "-del":
+    to_be_deleted = argv[2:]
     uinfo = getUsers()
-    for x in uinfo:
-        if path.exists( x.get('username') ):
-            rmtree( x.get('username') )
-    uinfo = [ x for x in uinfo if x.get('username') not in argv[2:] ]
-    compileUsers( uinfo )
+    deldirs( [ x for x in argv[2:] ] )
+    new_uinfo = [ user for user in uinfo if user.get('username') not in to_be_deleted ]
+    compileUsers( new_uinfo )
