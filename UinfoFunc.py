@@ -18,10 +18,9 @@ def getUsers():
 
 
 
-# Override Uinfo.txt with new users and passwords from a given dictionary <uinfo>
-def compileUsers(uinfo):
-    compiled = [ "{\n"+x.get('username')+"\n"+x.get('password')+"\n}\n" for x in uinfo ]
+# Override Uinfo.txt with new users and passwords from a given dictionary list <newuinfo>
+def writeUsers(newuinfo):
+    compiled = [ "{\n"+x.get('username')+"\n"+x.get('password')+"\n}\n" for x in newuinfo ]
     with open("Uinfo.txt","w") as ufile:
         ufile.write( ''.join( compiled ) )
     return
-
