@@ -1,1 +1,7 @@
-Complete the "add" option for SetupServer.py
+Fork the server process into 2 processes:
+1. "Front" server for communicating with the clients(recieving their FTP requests) and communicationg between other computers in the network.
+2. "Background" FTP server with pyftpdlib for executing the client's requests.
+
+For example:
+Client asks for his remote directory list. The "Front" server recieves his request, and forwards it to all computers on network, then
+combining the results and sending it back to the user.
