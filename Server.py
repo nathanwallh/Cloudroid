@@ -1,24 +1,27 @@
 #!/usr/bin/python3
 
+import logging
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 import re
 from os import mkdir
 from os import path
-from Uinfo import getUsers
+from UinfoFunc import getUsers
 
 
 # Add users from Uinfo.txt and create directories for them.
 auth = DummyAuthorizer( )
-for x in getUsers():
-    if False == path.exists( x.get('username') ):
-        mkdir( x.get('username') )
-    auth.add_user( x.get('username'), x.get('password'), './'+x.get('username'), perm='elradfmw' )
+for user in getUsers():
+    if False == path.exists( user.get('username') ):
+        mkdir( user.get('username') )
+    auth.add_user( user.get('username'), user.get('password'), './'+user.get('username'), perm='elradfmw' )
 
 
 handler = FTPHandler
 handler.authorizer = auth
+
+logging.basicConfig( filename='./serverlog', level=logging.INFO )
 
 server = FTPServer( ( '', '8000' ), handler )
 server.max_cons=5
