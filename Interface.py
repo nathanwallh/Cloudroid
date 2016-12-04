@@ -22,9 +22,13 @@ client = srvsock.accept()[0]
 client.send(b'220 FTPnetwork\r\n')
 while True:
     cli_inpt = client.recv(512)
-    if (not cli_inpt):
+    print( "Client say: ", cli_inpt.decode() )
+    if not cli_inpt:
         break
     FTPsrvsock.send( cli_inpt )
-    client.send( FTPsrvsock.recv( 512 ) )
-    
+    serv_inpt =  FTPsrvsock.recv( 512 )
+    print( "Server say: ", serv_inpt.decode() )
+    if not serv_inpt:
+        break
+    client.send( serv_inpt )
 print( "Client finished" )
