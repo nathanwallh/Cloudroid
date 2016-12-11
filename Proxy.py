@@ -12,6 +12,26 @@
 
 
 import socket
+import FtpNet
+
+network = FtpNet.FtpNet('Netinfo.txt')
+net_sockets = list()
+for comp in network:
+    net_sockets.append( socket.socket( socket.AF_INET, socket.SOCK_STREAM ) )
+    net_sockets[-1].settimeout(3)
+    try:
+        net_sockets[-1].connect( comp )
+    except (socket.gaierror,socket.timeout):
+        print("connection to " + str(comp) + " has failed")
+        net_sockets.pop()
+
+for con in net_sockets:
+    if "220" != con.recv( 256 ).decode().split()[0]:
+            print("connection to FTP server at" + str( con.getpeername() ) + " has failed")
+
+print("Completed connection to servers")
+exit()
+
 
 # Connect to the FTP server( Server.py )
 FTPsrvsock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
