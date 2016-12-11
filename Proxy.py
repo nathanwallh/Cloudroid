@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 
 # Proxy server that redirects FTP traffic to the right
 # computer on the network.
@@ -9,7 +10,6 @@
 # Then, after running the proxy, an FTP client can make a 
 # connection through port 6666 and then things run as usual.
 
-#!/usr/bin/python3
 
 import socket
 
@@ -23,7 +23,6 @@ if( firstcode != "220" ):
     print("Connection to the FTP network has failed.\nCode recieved: ", firstcode )
     exit()
 print ("Connected to the FTP network")
-
 
 # Listen on port 6666 and wait for clients
 srvsock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
