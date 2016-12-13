@@ -30,9 +30,10 @@ class FtpNet:
         total = list()
         for con in self.net_sockets:
             total.append( con.recv(256) )
+        total = list( set( total ) )
         return b'\n'.join(total)
 
-    
+ 
     def net_send( self, buf ):
         for con in self.net_sockets:
             con.send( buf )
