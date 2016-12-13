@@ -14,63 +14,52 @@
 import socket
 import FtpNet
 
-network = FtpNet.FtpNet('Netinfo.txt')
-net_sockets = list()
-for comp in network:
-    net_sockets.append( socket.socket( socket.AF_INET, socket.SOCK_STREAM ) )
-    net_sockets[-1].settimeout(3)
-    try:
-        net_sockets[-1].connect( comp )
-    except (socket.gaierror,socket.timeout):
-        print("connection to " + str(comp) + " has failed")
-        net_sockets.pop()
-
-for con in net_sockets:
-    if "220" != con.recv( 256 ).decode().split()[0]:
-            print("connection to FTP server at" + str( con.getpeername() ) + " has failed")
-
-print("Completed connection to servers")
-exit()
 
 
-# Connect to the FTP server( Server.py )
-FTPsrvsock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-FTPsrvsock.connect( ('127.0.0.1',8000) )
-serv_inpt = FTPsrvsock.recv( 256 )
-firstcode = serv_inpt.decode().split(' ')[0]
-
-if( firstcode != "220" ):
-    print("Connection to the FTP network has failed.\nCode recieved: ", firstcode )
-    exit()
-print ("Connected to the FTP network")
-
-# Listen on port 6666 and wait for clients
+# Listen on port 6000 and wait for clients
 srvsock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 srvsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-srvsock.bind( ('0.0.0.0',6666) )
+srvsock.bind( ('0.0.0.0',6000) )
 srvsock.listen( 1 )
-client = srvsock.accept()[0]
 
-# Send the FTP accept code to the client
-client.send(b'220 FTPnetwork\r\n')
-
-# Send clients data to the FTP server and vice versa.
-# Print output of client and server for logging reasons.
 while True:
-    cli_inpt = client.recv(256)
-    print( "Client say: ", cli_inpt.decode() )
-    if not cli_inpt:
-        break
-    FTPsrvsock.send( cli_inpt )
-    serv_inpt =  FTPsrvsock.recv( 256 )
-    print( "Server say: ", serv_inpt.decode() )
-    if not serv_inpt:
-        break
-    client.send( serv_inpt )
-# Code 125 means that now a data connection is open and therefore the FTP server
-# will reply before the client does.
-    if serv_inpt.decode().split(' ')[0] == "125":
-        serv_inpt = FTPsrvsock.recv( 256 )
-        print("Server say: ", serv_inpt.decode() )
-        client.send( serv_inpt )
-print( "Client finished" )
+    # Wait for clients and serve them
+    client = srvsock.accept()[0]
+    client.send(b'220 FTPnetwork\r\n')
+    network = FtpNet.FtpNet('Netinfo.txt')
+
+    # Mediate between the client and the network
+    while True:
+        
+        # Get input from client and send to network
+        cli_inpt = client.recv(256)
+        
+        print( "Client says: ", cli_inpt.decode() ) 
+        network.net_send(cli_inpt)
+
+        if not cli_inpt:
+            break
+        
+        cmd = cli_inpt.decode().split()[0]
+        
+        if cmd == "BYEBYE":
+            exit()
+        
+        # Get input from network and send to client
+        net_inpt = network.net_recv(256)
+         
+        print( "Network says: ", net_inpt.decode() ) 
+        client.send( net_inpt )
+
+        if not net_inpt:
+            client.close()
+            break
+        
+        code = net_inpt.decode().split()[0]
+        
+        if code == "221":
+            client.close()
+            break;
+        # Code 125 
+        elif code == "125":
+            net_inpt = network.net_recv( 256 )
