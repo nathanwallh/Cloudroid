@@ -19,21 +19,44 @@ class FtpNet:
             except (socket.gaierror,socket.timeout):
                 print("connection to " + str(comp) + " has failed")
                 self.net_sockets.pop()
+        
         # Make sure that an FTP server is up
-        for con in self.net_sockets:
-            if "220" != con.recv( 256 ).decode().split()[0]:
-                    print("connection to FTP server at" + str( con.getpeername() ) + " has failed")
-                    self.net_sockets.remove( con )
+        for server in self.net_sockets:
+            code = self.__get_code( self.__get_raw_inpt( server ) )
+            if not code:
+                continue
+            if code != "220":
+                print("connection to FTP server at" + str( server.getpeername() ) + " has failed")
+                self.net_sockets.remove( server )
         print("Completed connection to servers")
-    
+
+
+    def __get_code( self, raw_inpt ):
+        if not raw_inpt:
+            return ''
+        return raw_inpt.decode().split()[0]
+
+
+    def __get_raw_inpt( self, server ):
+            try:
+                inpt = server.recv( 256 )
+                if not inpt:
+                    raise ValueError("got empty string")
+            except (socket.timeout) as e:
+                print("connection broke down with " + str( server.getpeername() ) )
+                self.net_sockets.remove( server )
+                inpt = ''
+            return inpt
+
+
     def net_recv( self, buf ):
         total = list()
-        for con in self.net_sockets:
-            total.append( con.recv(256) )
-        total = list( set( total ) )
+        for server in self.net_sockets:
+            raw_inpt = self.__get_raw_inpt( server )
+            total.append( raw_inpt )
         return b'\n'.join(total)
 
  
     def net_send( self, buf ):
-        for con in self.net_sockets:
-            con.send( buf )
+        for server in self.net_sockets:
+            server.send( buf )
