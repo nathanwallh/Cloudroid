@@ -67,7 +67,6 @@ class ProxyServer:
                 elif code == "125":
                     net_inpt = network.net_recv( 256 )
 
-
                     
 if __name__ == '__main__':
     Proxy = ProxyServer(6000)
