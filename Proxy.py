@@ -56,7 +56,7 @@ class ProxyThread( threading.Thread ):
                 net_inpt = self.network.net_recv( 256 )
 
    
-   def _get_raw_inpt( self ):
+    def _get_raw_inpt( self ):
         try:
             inpt = self.client.recv( 256 )
         except (socket.timeout) as e:
@@ -67,7 +67,7 @@ class ProxyThread( threading.Thread ):
 
 
     def get_cmd( raw_inpt ):
-        if not raw_inpt
+        if not raw_inpt:
             return ''
         return raw_inpt[:4].decode().strip()
 
