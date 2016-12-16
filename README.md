@@ -1,5 +1,5 @@
 # FTPnetwork
-FTP server to run on cloud of odroid mini computers
+FTP server to run on cloud of odroid mini computers.
 
 
 Tools and packages:
