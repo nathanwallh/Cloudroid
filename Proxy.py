@@ -15,7 +15,6 @@ import threading
 import socket
 import FtpNet
 
-    
 
 class ProxyThread( threading.Thread ):
     def __init__( self, client ): 
@@ -23,6 +22,7 @@ class ProxyThread( threading.Thread ):
         self.network = FtpNet.FtpNet('Netinfo.txt')
         threading.Thread.__init__( self )
    
+    
     # Serving the client
     def run( self ):
         self.client.send(b'220 FTPnetwork\r\n')
@@ -54,6 +54,22 @@ class ProxyThread( threading.Thread ):
             # Code 125 
             elif code == "125":
                 net_inpt = self.network.net_recv( 256 )
+
+   
+   def _get_raw_inpt( self ):
+        try:
+            inpt = self.client.recv( 256 )
+        except (socket.timeout) as e:
+            print("Client is dead")
+            inpt = ''
+        return inpt
+
+
+
+    def get_cmd( raw_inpt ):
+        if not raw_inpt
+            return ''
+        return raw_inpt[:4].decode().strip()
 
 
 class ProxyServer:
