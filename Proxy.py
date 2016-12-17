@@ -16,45 +16,44 @@ import socket
 import FtpNet
 
 
+
 class ProxyThread( threading.Thread ):
     def __init__( self, client ): 
         self.client = client
         self.network = FtpNet.FtpNet('Netinfo.txt')
         threading.Thread.__init__( self )
-   
     
     # Serving the client
     def run( self ):
         self.client.send(b'220 FTPnetwork\r\n')
         while True:
             # Get input from client and send to network
-            cli_inpt = self.client.recv(256)
+            cli_inpt = self._get_raw_inpt()
             print( "Client says: ", cli_inpt.decode() ) 
             self.network.net_send(cli_inpt)
-
             if not cli_inpt:
                 break
-            cmd = cli_inpt.decode().split()[0]
+            cmd = self._get_cmd( cli_inpt )
+            self.network.curr_cmd = cmd
             
-            # Get input from network and send to client
-            net_inpt = self.network.net_recv(256)
-             
+            # Get input from network and send to client 
+            net_inpt = self.network.net_recv()
             print( "Network says: ", net_inpt.decode() ) 
             self.client.send( net_inpt )
-
             if not net_inpt:
                 self.client.close()
                 break
-            
             code = net_inpt.decode().split()[0]
             
             if code == "221":
                 self.client.close()
                 break;
-            # Code 125 
+            # Code 125
             elif code == "125":
-                net_inpt = self.network.net_recv( 256 )
-
+                net_inpt = self.network.net_recv()
+                self.client.send( net_inpt )
+                print( "Network says: ", net_inpt.decode() ) 
+            self.network.curr_cmd = ''
    
     def _get_raw_inpt( self ):
         try:
@@ -64,9 +63,7 @@ class ProxyThread( threading.Thread ):
             inpt = ''
         return inpt
 
-
-
-    def get_cmd( raw_inpt ):
+    def _get_cmd( self, raw_inpt ):
         if not raw_inpt:
             return ''
         return raw_inpt[:4].decode().strip()
