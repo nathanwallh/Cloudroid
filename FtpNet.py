@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import re
 import socket
 
 class FtpNet:
@@ -29,14 +30,10 @@ class FtpNet:
         print("Completed connection to servers")
 
 
-
-
     def _get_code( self, raw_inpt ):
         if not raw_inpt:
             return ''
         return raw_inpt.decode().split()[0]
-
-
 
 
     def _get_raw_inpt( self, server ):
@@ -51,15 +48,12 @@ class FtpNet:
             return inpt
 
 
-
-
-    def net_recv( self, buf ):
+    def net_recv( self ):
         total = list()
         for server in self.servers:
             raw_inpt = self._get_raw_inpt( server )
             total.append( raw_inpt )
         return b'\n'.join(total)
-
 
 
 
