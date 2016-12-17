@@ -16,6 +16,7 @@ import socket
 import FtpNet
 
 
+
 class ProxyThread( threading.Thread ):
     def __init__( self, client ): 
         self.client = client
@@ -33,22 +34,21 @@ class ProxyThread( threading.Thread ):
             if not cli_inpt:
                 break
             cmd = self._get_cmd( cli_inpt )
+            self.network.curr_cmd = cmd
             
-            # Get input from network and send to client
+            # Get input from network and send to client 
             net_inpt = self.network.net_recv()
-             
             print( "Network says: ", net_inpt.decode() ) 
             self.client.send( net_inpt )
-
             if not net_inpt:
-                self.client.close()
                 break
-            
             code = net_inpt.decode().split()[0]
             
+            self.network.curr_cmd = ''
             if code == "221":
                 self.client.close()
                 break;
+            
             # Code 125 
             elif code == "125":
                 net_inpt = self.network.net_recv()
