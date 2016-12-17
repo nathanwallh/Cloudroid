@@ -39,20 +39,27 @@ class FtpNet:
 
 
     def _get_raw_inpt( self, server ):
-            try:
-                inpt = server.recv( 256 )
-                if not inpt:
-                    raise ValueError("got empty string")
-            except (socket.timeout) as e:
-                print("connection broke down with " + str( server.getpeername() ) )
-                self.servers.remove( server )
-                inpt = ''
+            while True:
+                try:
+                    inpt = server.recv( 256 )
+                    if not inpt:
+                        raise ValueError("EOF")
+                    break
+                except (ValueError,socket.timeout) as e:
+                    if type(e).__name__=='timeout' and self.curr_cmd.lower() == "STOR".lower():
+                        continue
+                    print("connection broke down with " + str( server.getpeername() ) )
+                    print("curr_cmd = " + self.curr_cmd)
+                    print("type(e) = " + type(e).__name__ )
+                    self.servers.remove( server )
+                    inpt = b''
+                    break
             return inpt
-
+    
 
     def net_recv( self ):
-        if self.curr_cmd == "EPSV":
-            return net_recv_EPSV()
+        if self.curr_cmd.lower() == "EPSV".lower():
+            return self.net_recv_EPSV()
         total = list()
         for server in self.servers:
             raw_inpt = self._get_raw_inpt( server )
@@ -70,10 +77,9 @@ class FtpNet:
             if code != "229":
                 print("Server: " + str( server.getpeername() ) +" failed with EPSV")
             else:
-                port = int( re.search('\d+', raw_inpt).group() )
-                addresses.append( (server.getpeername(), port) )
-
-       # create data connections with all servers except the loopback
+                port = int( re.search('\d+', raw_inpt.decode()[3:]).group() )
+                addresses.append( (server.getpeername()[0], port) )
+        # create data connections with all servers except the loopback
         loopback_port = dict(addresses)["127.0.0.1"]
         addresses = [ addr for addr in addresses if addr[0] != "127.0.0.1" ]
         for comp in addresses:
@@ -84,7 +90,8 @@ class FtpNet:
                 self.data_sockets.append( data_sock )
             except (socket.gaierror,socket.timeout):
                 print("Data connection to " + str( server.getpeername() ) + " has failed." )
-        return "229 Entering extended passive mode (|||"+loopback_port+"|)."     
+        retval = "229 Entering extended passive mode (|||"+str(loopback_port)+"|)." 
+        return str.encode(retval) 
 
 
     def net_send( self, buf ):

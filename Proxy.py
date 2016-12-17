@@ -41,17 +41,19 @@ class ProxyThread( threading.Thread ):
             print( "Network says: ", net_inpt.decode() ) 
             self.client.send( net_inpt )
             if not net_inpt:
+                self.client.close()
                 break
             code = net_inpt.decode().split()[0]
             
-            self.network.curr_cmd = ''
             if code == "221":
                 self.client.close()
                 break;
-            
-            # Code 125 
+            # Code 125
             elif code == "125":
                 net_inpt = self.network.net_recv()
+                self.client.send( net_inpt )
+                print( "Network says: ", net_inpt.decode() ) 
+            self.network.curr_cmd = ''
    
     def _get_raw_inpt( self ):
         try:
@@ -64,7 +66,7 @@ class ProxyThread( threading.Thread ):
     def _get_cmd( self, raw_inpt ):
         if not raw_inpt:
             return ''
-        return raw_inpt[:3].decode().strip()
+        return raw_inpt[:4].decode().strip()
 
 
 class ProxyServer:
