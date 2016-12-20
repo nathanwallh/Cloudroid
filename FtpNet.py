@@ -1,29 +1,32 @@
 #!/usr/bin/python3
-import re
 import socket
 
 class FtpNet:
     def __init__( self, netfile ):
-
-        # Read the addresses from <netfile>
-        f = open( netfile, 'r' )
-        raw_addr = f.read().split()
-        addresses = [ (address.split(':')[0],int(address.split(':')[1])) for address in raw_addr ]
+        
+    # Private variables declarations
         self.servers = list()
         self.data_sockets = list()
-        self.curr_cmd = '' 
+        self.cmd_req = '' 
+        self.data_addresses = ''
 
-        # Connect to the addresses in netfile
+    # Connect to the addresses in netfile
+        with open( netfile, 'r' ) as f:
+            raw_addr = f.read().split()
+        addresses = [ (address.split(':')[0],int(address.split(':')[1])) for address in raw_addr ]
         for comp in addresses:
             server_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-            server_sock.settimeout(3)
+            if comp[0] != '127.0.0.1':
+                server_sock.settimeout(3)
+            else:
+                server_sock.settimeout(120)
             try:
                 server_sock.connect( comp )
                 self.servers.append( server_sock )
             except (socket.gaierror,socket.timeout):
                 print("connection to " + str(comp) + " has failed")
         for server in self.servers:
-            code = self._get_code( self._get_raw_inpt( server ) )
+            code = self.get_code( self._get_raw_inpt( server ) )
             if not code:
                 continue
             if code != "220":
@@ -31,13 +34,14 @@ class FtpNet:
                 self.servers.remove( server )
         print("Completed connection to servers")
 
-
-    def _get_code( self, raw_inpt ):
+# Extract the code from the FTP servers response
+    def get_code( self, raw_inpt ):
         if not raw_inpt:
             return ''
         return raw_inpt.decode().split()[0]
 
 
+# Recieve input from FTP server
     def _get_raw_inpt( self, server ):
             while True:
                 try:
@@ -46,56 +50,73 @@ class FtpNet:
                         raise ValueError("EOF")
                     break
                 except (ValueError,socket.timeout) as e:
-                    if type(e).__name__=='timeout' and self.curr_cmd.lower() == "STOR".lower():
+                    if type(e).__name__=='timeout' and self.cmd_req.lower() == "stor":
                         continue
                     print("connection broke down with " + str( server.getpeername() ) )
-                    print("curr_cmd = " + self.curr_cmd)
-                    print("type(e) = " + type(e).__name__ )
                     self.servers.remove( server )
                     inpt = b''
                     break
             return inpt
     
 
-    def net_recv( self ):
-        if self.curr_cmd.lower() == "EPSV".lower():
+
+# Send the file specified in <filename> to all servers on the network except localhost
+    def send_data( self, filename ):
+        for data_s in self.data_sockets:
+            if data_s.getpeername()[0] != '127.0.0.1':
+                continue
+            with open( filename, "r" ) as f:
+                try:
+                    data_s.send( f.read().encode() )
+                except:
+                    print("Problem in sending data")
+                    exit()
+        
+# Recieve data from all servers on the network, join it together and send back to proxy
+    def net_recv( self, servers ):
+        if self.cmd_req == "epsv":
             return self.net_recv_EPSV()
         total = list()
-        for server in self.servers:
+        for server in servers:
             raw_inpt = self._get_raw_inpt( server )
             total.append( raw_inpt )
         total = list( set( total ) )
-        return total[0]
+        return b'\n'.join( total )
 
 
+# Save all ports for data connection and send back only the localhost port 
     def net_recv_EPSV( self ):
-        # Extract the addresses with ports
         addresses = list()
         for server in self.servers:
             raw_inpt = self._get_raw_inpt( server )
-            code = self._get_code( raw_inpt )
+            code = self.get_code( raw_inpt )
             if code != "229":
                 print("Server: " + str( server.getpeername() ) +" failed with EPSV")
             else:
-                port = int( re.search('\d+', raw_inpt.decode()[3:]).group() )
+                port = int( raw_inpt.decode()[3:].split("|")[-2] )
                 addresses.append( (server.getpeername()[0], port) )
-        # create data connections with all servers except the loopback
-        loopback_port = dict(addresses)["127.0.0.1"]
-        addresses = [ addr for addr in addresses if addr[0] != "127.0.0.1" ]
-        for comp in addresses:
+        localhost_port = dict(addresses)["127.0.0.1"]
+        self.data_addresses = [ addr for addr in addresses if addr[0] != "127.0.0.1" ]
+        return str.encode("229 Entering extended passive mode (|||"+str(localhost_port)+"|).\n")
+
+# Make data connection with all addresses in self.data_addresses
+    def make_data_connections( self ):
+        for comp in self.data_addresses:
             data_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
             data_sock.settimeout(3)
             try:
                 data_sock.connect( comp )
                 self.data_sockets.append( data_sock )
             except (socket.gaierror,socket.timeout):
-                print("Data connection to " + str( server.getpeername() ) + " has failed." )
-        retval = "229 Entering extended passive mode (|||"+str(loopback_port)+"|)." 
-        return str.encode(retval) 
+                print("Data connection to " + str( data_sock.getpeername() ) + " has failed." )
 
-
+# Send buf to all servers in the network
     def net_send( self, buf ):
         for server in self.servers:
-            server.send( buf )
+            try:
+                server.send( buf )
+            except( socket.gaierror, socket.timeout ):
+                print("Failed sending to one of the servers")
+                self.servers.remove ( server )
 
 
