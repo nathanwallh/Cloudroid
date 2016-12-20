@@ -28,11 +28,11 @@ class ProxyThread( threading.Thread ):
         self.filename = ''
         self.ret_code = ''
 
-    # Serving the client
+# Serve the client
     def run( self ):
         self.client.send(b'220 FTPnetwork\r\n')
         while True:
-            # Get input from client and send to network
+        # Get input from client and send to network
             self.cli_inpt = self._get_raw_inpt()
             print( "Client says: ", self.cli_inpt.decode() ) 
             self.network.net_send(self.cli_inpt)
@@ -41,18 +41,20 @@ class ProxyThread( threading.Thread ):
             self.curr_cmd = self._get_cmd( self.cli_inpt )
             self.network.cmd_req = self.curr_cmd
             
-            # Get input from network and send to client 
+        # Get input from network and send to client 
             net_inpt = self.network.net_recv( self.network.servers )
             print( "Network says: ", net_inpt.decode() ) 
             self.ret_code = self.network.get_code( net_inpt )
             self.send_client( net_inpt )
-            
+           
+        # Handling special cases
             if self.curr_cmd == "user":
-                self.user = self._get_username( self.cli_inpt )
+                self.user = self.cli_inpt[5:].decode()
             elif self.curr_cmd == "quit":
                 self.client.close()
                 break
             elif self.curr_cmd == "stor":
+                self.filename = self.user + "/" + self.cli_inpt[5:].decode()
                 net_inpt = self._STOR()
                 print("Network says:" + net_inpt.decode())
                 self.send_client( net_inpt )
@@ -63,26 +65,24 @@ class ProxyThread( threading.Thread ):
 #            elif cmd == "epsv":
 #               self._EPSV()
 
-    def _get_filename( self, raw_data ):
-        if not raw_data:
-            return ''
-        return raw_data[5:].decode()
 
-
+# Wait for 226 from the local server. Then send the file to the rest of the servers.
     def _STOR( self ):
         loopback = [server for server in self.network.servers if server.getpeername()[0]=='127.0.0.1'];
         external = [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1'];
         local_inpt = self.network.net_recv( loopback )
-        self.filename = self.user + "/" + self._get_filename( self.cli_inpt )
         code = self.network.get_code( local_inpt )
         if code == "226":
             self.network.send_data( self.filename )
+        else:
+            return b"421 local server did not recieve the file"
         ext_respone = [ s for s in self.network.net_recv( external ).split() if s.isdigit() ]
         if ext_respone.count( "226" ) != len( ext_respone ):
             print("Not all servers recieved the file")
         return local_inpt
    
-    
+
+# Send raw data to client's control connection
     def send_client( self, raw_data ):
         try:
             self.client.send( raw_data )
@@ -91,10 +91,7 @@ class ProxyThread( threading.Thread ):
             exit()
 
 
-    def _get_username( self, raw_inpt ):
-        return raw_inpt.decode().split()[1]
-
-
+# Recieve raw data from the client's control connection
     def _get_raw_inpt( self ):
         try:
             inpt = self.client.recv( 256 )
@@ -103,6 +100,8 @@ class ProxyThread( threading.Thread ):
             inpt = ''
         return inpt
 
+
+# Extract the command from the client's raw input
     def _get_cmd( self, raw_inpt ):
         if not raw_inpt:
             return ''

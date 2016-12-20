@@ -5,13 +5,12 @@ import socket
 class FtpNet:
     def __init__( self, netfile ):
         
-        # Private variables declarations
+    # Private variables declarations
         self.servers = list()
         self.data_sockets = list()
         self.cmd_req = '' 
 
-        # Read the addresses from <netfile>
-        # Connect to the addresses in netfile
+    # Connect to the addresses in netfile
         with open( netfile, 'r' ) as f:
             raw_addr = f.read().split()
         addresses = [ (address.split(':')[0],int(address.split(':')[1])) for address in raw_addr ]
@@ -35,13 +34,14 @@ class FtpNet:
                 self.servers.remove( server )
         print("Completed connection to servers")
 
-
+# Extract the code from the FTP servers response
     def get_code( self, raw_inpt ):
         if not raw_inpt:
             return ''
         return raw_inpt.decode().split()[0]
 
 
+# Recieve input from FTP server
     def _get_raw_inpt( self, server ):
             while True:
                 try:
@@ -53,8 +53,6 @@ class FtpNet:
                     if type(e).__name__=='timeout' and self.cmd_req.lower() == "stor":
                         continue
                     print("connection broke down with " + str( server.getpeername() ) )
-                    print("cmd_req = " + self.cmd_req)
-                    print("type(e) = " + type(e).__name__ )
                     self.servers.remove( server )
                     inpt = b''
                     break
@@ -62,7 +60,7 @@ class FtpNet:
     
 
 
-
+# Send the file specified in <filename> to all servers on the network except localhost
     def send_data( self, filename ):
         for data_s in self.data_sockets:
             if data_s.getpeername()[0] != '127.0.0.1':
@@ -74,7 +72,7 @@ class FtpNet:
                     print("Problem in sending data")
                     exit()
         
-    
+# Recieve data from all servers on the network, join it together and send back to proxy
     def net_recv( self, servers ):
         if self.cmd_req == "epsv":
             return self.net_recv_EPSV()
@@ -88,9 +86,8 @@ class FtpNet:
         return b'\n'.join( total )
 
 
-
+# Make data connections with all servers and recieve their responses
     def net_recv_EPSV( self ):
-        # Extract the addresses with ports
         addresses = list()
         for server in self.servers:
             raw_inpt = self._get_raw_inpt( server )
@@ -100,7 +97,6 @@ class FtpNet:
             else:
                 port = int( re.search('\d+', raw_inpt.decode()[3:]).group() )
                 addresses.append( (server.getpeername()[0], port) )
-        # create data connections with all servers except the loopback
         loopback_port = dict(addresses)["127.0.0.1"]
         addresses = [ addr for addr in addresses if addr[0] != "127.0.0.1" ]
         for comp in addresses:
@@ -117,6 +113,10 @@ class FtpNet:
 
     def net_send( self, buf ):
         for server in self.servers:
-            server.send( buf )
+            try:
+                server.send( buf )
+            except( socket.gaierror, socket.timeout ):
+                print("Failed sending to one of the servers")
+                self.servers.remove ( server )
 
 
