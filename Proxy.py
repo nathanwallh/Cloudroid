@@ -22,39 +22,78 @@ class ProxyThread( threading.Thread ):
         self.client = client
         self.network = FtpNet.FtpNet('Netinfo.txt')
         threading.Thread.__init__( self )
-    
-    # Serving the client
+        self.cli_inpt = ''
+        self.curr_cmd = ''
+        self.user = ''
+        self.filename = ''
+        self.ret_code = ''
+
+# Serve the client
     def run( self ):
         self.client.send(b'220 FTPnetwork\r\n')
         while True:
-            # Get input from client and send to network
-            cli_inpt = self._get_raw_inpt()
-            print( "Client says: ", cli_inpt.decode() ) 
-            self.network.net_send(cli_inpt)
-            if not cli_inpt:
+        # Get input from client and send to network
+            self.cli_inpt = self._get_raw_inpt()
+            print( "Client says: ", self.cli_inpt.decode() ) 
+            self.network.net_send(self.cli_inpt)
+            if not self.cli_inpt:
                 break
-            cmd = self._get_cmd( cli_inpt )
-            self.network.curr_cmd = cmd
+            self.curr_cmd = self._get_cmd( self.cli_inpt )
+            self.network.cmd_req = self.curr_cmd
             
-            # Get input from network and send to client 
-            net_inpt = self.network.net_recv()
+        # Get input from network and send to client 
+            net_inpt = self.network.net_recv( self.network.servers )
             print( "Network says: ", net_inpt.decode() ) 
-            self.client.send( net_inpt )
-            if not net_inpt:
+            self.ret_code = self.network.get_code( net_inpt )
+            self.send_client( net_inpt )
+           
+        # Handling special cases
+            if self.curr_cmd == "user":
+                self.user = self.cli_inpt[5:].decode()
+            elif self.curr_cmd == "quit":
                 self.client.close()
                 break
-            code = net_inpt.decode().split()[0]
-            
-            if code == "221":
-                self.client.close()
-                break;
-            # Code 125
-            elif code == "125":
-                net_inpt = self.network.net_recv()
-                self.client.send( net_inpt )
-                print( "Network says: ", net_inpt.decode() ) 
-            self.network.curr_cmd = ''
+            elif self.curr_cmd == "epsv":
+                self.network.make_data_connections()
+            elif self.curr_cmd == "stor":
+                self.filename = self.user + "/" + self.cli_inpt[5:].decode()
+                net_inpt = self._STOR()
+                print("Network says:" + net_inpt.decode())
+                self.send_client( net_inpt )
+#            elif cmd == "list":
+#                self._LIST()
+#            elif cmd == "retr":
+#                self._RETR() 
+#            elif cmd == "epsv":
+#               self._EPSV()
+
+
+# Wait for 226 from the local server. Then send the file to the rest of the servers.
+    def _STOR( self ):
+        localhost = [server for server in self.network.servers if server.getpeername()[0]=='127.0.0.1'];
+        external = [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1'];
+        local_inpt = self.network.net_recv( localhost )
+        code = self.network.get_code( local_inpt )
+        if code == "226":
+            self.network.send_data( self.filename )
+        else:
+            return b"421 local server did not recieve the file"
+        ext_respone = [ s for s in self.network.net_recv( external ).split() if s.isdigit() ]
+        if ext_respone.count( "226" ) != len( ext_respone ):
+            print("Not all servers recieved the file")
+        return local_inpt
    
+
+# Send raw data to client's control connection
+    def send_client( self, raw_data ):
+        try:
+            self.client.send( raw_data )
+        except( socket.gaierror, socket.timeout ):
+            print("The client has suddenly died")
+            exit()
+
+
+# Recieve raw data from the client's control connection
     def _get_raw_inpt( self ):
         try:
             inpt = self.client.recv( 256 )
@@ -63,10 +102,12 @@ class ProxyThread( threading.Thread ):
             inpt = ''
         return inpt
 
+
+# Extract the command from the client's raw input
     def _get_cmd( self, raw_inpt ):
         if not raw_inpt:
             return ''
-        return raw_inpt[:4].decode().strip()
+        return raw_inpt[:4].decode().strip().lower()
 
 
 class ProxyServer:
