@@ -4,26 +4,30 @@ import socket
 
 class FtpNet:
     def __init__( self, netfile ):
-
-        # Read the addresses from <netfile>
-        f = open( netfile, 'r' )
-        raw_addr = f.read().split()
-        addresses = [ (address.split(':')[0],int(address.split(':')[1])) for address in raw_addr ]
+        
+        # Private variables declarations
         self.servers = list()
         self.data_sockets = list()
-        self.curr_cmd = '' 
+        self.cmd_req = '' 
 
+        # Read the addresses from <netfile>
         # Connect to the addresses in netfile
+        with open( netfile, 'r' ) as f:
+            raw_addr = f.read().split()
+        addresses = [ (address.split(':')[0],int(address.split(':')[1])) for address in raw_addr ]
         for comp in addresses:
             server_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-            server_sock.settimeout(3)
+            if comp[0] != '127.0.0.1':
+                server_sock.settimeout(3)
+            else:
+                server_sock.settimeout(120)
             try:
                 server_sock.connect( comp )
                 self.servers.append( server_sock )
             except (socket.gaierror,socket.timeout):
                 print("connection to " + str(comp) + " has failed")
         for server in self.servers:
-            code = self._get_code( self._get_raw_inpt( server ) )
+            code = self.get_code( self._get_raw_inpt( server ) )
             if not code:
                 continue
             if code != "220":
@@ -32,7 +36,7 @@ class FtpNet:
         print("Completed connection to servers")
 
 
-    def _get_code( self, raw_inpt ):
+    def get_code( self, raw_inpt ):
         if not raw_inpt:
             return ''
         return raw_inpt.decode().split()[0]
@@ -46,10 +50,10 @@ class FtpNet:
                         raise ValueError("EOF")
                     break
                 except (ValueError,socket.timeout) as e:
-                    if type(e).__name__=='timeout' and self.curr_cmd.lower() == "STOR".lower():
+                    if type(e).__name__=='timeout' and self.cmd_req.lower() == "stor":
                         continue
                     print("connection broke down with " + str( server.getpeername() ) )
-                    print("curr_cmd = " + self.curr_cmd)
+                    print("cmd_req = " + self.cmd_req)
                     print("type(e) = " + type(e).__name__ )
                     self.servers.remove( server )
                     inpt = b''
@@ -58,7 +62,7 @@ class FtpNet:
     
 
     def net_recv( self ):
-        if self.curr_cmd.lower() == "EPSV".lower():
+        if self.cmd_req.lower() == "EPSV".lower():
             return self.net_recv_EPSV()
         total = list()
         for server in self.servers:
@@ -68,12 +72,33 @@ class FtpNet:
         return total[0]
 
 
+
+    def send_data( self, filename ):
+        for data_s in self.data_sockets:
+            if data_s.getpeername()[0] != '127.0.0.1':
+                continue
+            with open( filename, "r" ) as f:
+                try:
+                    data_s.send( f.read().encode() )
+                except:
+                    print("Problem in sending data")
+                    exit()
+    
+
+    def local_recv( self ):
+        local_server = next(server for server in self.servers if server.getpeername()[0] == '127.0.0.1')
+        try:
+            return local_server.recv(256)
+        except( socket.gairerror, socket.timeout ) as e:
+            return b"421 local server failed to recieve\n"
+
+
     def net_recv_EPSV( self ):
         # Extract the addresses with ports
         addresses = list()
         for server in self.servers:
             raw_inpt = self._get_raw_inpt( server )
-            code = self._get_code( raw_inpt )
+            code = self.get_code( raw_inpt )
             if code != "229":
                 print("Server: " + str( server.getpeername() ) +" failed with EPSV")
             else:
