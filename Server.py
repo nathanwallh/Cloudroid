@@ -5,23 +5,25 @@ from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 from os import mkdir
 from os import path
-import UinfoFunc
+from UinfoFunc import get_all_usernames_from_file
+
+
+FTPPORT = 8000
+
 
 # Add users from Uinfo.txt and create directories for them.
-auth = DummyAuthorizer( )
-users =  UinfoFunc.getUsers()
-for user in users:
-    if False == path.exists( user.get('username') ):
-        mkdir( user.get('username') )
-    auth.add_user( user.get('username'), user.get('password'), './'+user.get('username'), perm='elradfmw' )
+auth = DummyAuthorizer()
+users = get_all_usernames_from_file("Uinfo.txt")
+for user, password in users.items():
+    if path.exists(user) is False:
+        mkdir(user)
+    auth.add_user(user, password, './' + user, perm='elradfmw')
 
 handler = FTPHandler
 handler.authorizer = auth
 
-server = FTPServer( ( '', '8000' ), handler )
-server.max_cons=5
-server.max_cons_per_ip=5
+server = FTPServer(('', FTPPORT), handler)
+server.max_cons = 5
+server.max_cons_per_ip = 5
 
-server.serve_forever( )
-
-
+server.serve_forever()
