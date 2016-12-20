@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 ######################
 # SetupServer.py
 # Setup the FTP server.
