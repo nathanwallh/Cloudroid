@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import re
 import socket
 
 class FtpNet:
@@ -9,6 +8,7 @@ class FtpNet:
         self.servers = list()
         self.data_sockets = list()
         self.cmd_req = '' 
+        self.data_addresses = ''
 
     # Connect to the addresses in netfile
         with open( netfile, 'r' ) as f:
@@ -76,8 +76,6 @@ class FtpNet:
     def net_recv( self, servers ):
         if self.cmd_req == "epsv":
             return self.net_recv_EPSV()
-        elif self.cmd_req == "list":
-            return self.net_recv_LIST()
         total = list()
         for server in servers:
             raw_inpt = self._get_raw_inpt( server )
@@ -86,7 +84,7 @@ class FtpNet:
         return b'\n'.join( total )
 
 
-# Make data connections with all servers and recieve their responses
+# Save all ports for data connection and send back only the localhost port 
     def net_recv_EPSV( self ):
         addresses = list()
         for server in self.servers:
@@ -95,22 +93,24 @@ class FtpNet:
             if code != "229":
                 print("Server: " + str( server.getpeername() ) +" failed with EPSV")
             else:
-                port = int( re.search('\d+', raw_inpt.decode()[3:]).group() )
+                port = int( raw_inpt.decode()[3:].split("|")[-2] )
                 addresses.append( (server.getpeername()[0], port) )
-        loopback_port = dict(addresses)["127.0.0.1"]
-        addresses = [ addr for addr in addresses if addr[0] != "127.0.0.1" ]
-        for comp in addresses:
+        localhost_port = dict(addresses)["127.0.0.1"]
+        self.data_addresses = [ addr for addr in addresses if addr[0] != "127.0.0.1" ]
+        return str.encode("229 Entering extended passive mode (|||"+str(localhost_port)+"|).\n")
+
+# Make data connection with all addresses in self.data_addresses
+    def make_data_connections( self ):
+        for comp in self.data_addresses:
             data_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
             data_sock.settimeout(3)
             try:
                 data_sock.connect( comp )
                 self.data_sockets.append( data_sock )
             except (socket.gaierror,socket.timeout):
-                print("Data connection to " + str( server.getpeername() ) + " has failed." )
-        retval = "229 Entering extended passive mode (|||"+str(loopback_port)+"|).\n" 
-        return str.encode(retval) 
+                print("Data connection to " + str( data_sock.getpeername() ) + " has failed." )
 
-
+# Send buf to all servers in the network
     def net_send( self, buf ):
         for server in self.servers:
             try:

@@ -53,6 +53,8 @@ class ProxyThread( threading.Thread ):
             elif self.curr_cmd == "quit":
                 self.client.close()
                 break
+            elif self.curr_cmd == "epsv":
+                self.network.make_data_connections()
             elif self.curr_cmd == "stor":
                 self.filename = self.user + "/" + self.cli_inpt[5:].decode()
                 net_inpt = self._STOR()
@@ -68,9 +70,9 @@ class ProxyThread( threading.Thread ):
 
 # Wait for 226 from the local server. Then send the file to the rest of the servers.
     def _STOR( self ):
-        loopback = [server for server in self.network.servers if server.getpeername()[0]=='127.0.0.1'];
+        localhost = [server for server in self.network.servers if server.getpeername()[0]=='127.0.0.1'];
         external = [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1'];
-        local_inpt = self.network.net_recv( loopback )
+        local_inpt = self.network.net_recv( localhost )
         code = self.network.get_code( local_inpt )
         if code == "226":
             self.network.send_data( self.filename )
