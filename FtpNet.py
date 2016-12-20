@@ -90,7 +90,7 @@ class FtpNet:
                 self.data_sockets.append( data_sock )
             except (socket.gaierror,socket.timeout):
                 print("Data connection to " + str( server.getpeername() ) + " has failed." )
-        retval = "229 Entering extended passive mode (|||"+str(loopback_port)+"|)." 
+        retval = "229 Entering extended passive mode (|||"+str(loopback_port)+"|).\n" 
         return str.encode(retval) 
 
 
