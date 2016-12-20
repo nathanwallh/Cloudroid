@@ -61,16 +61,6 @@ class FtpNet:
             return inpt
     
 
-    def net_recv( self ):
-        if self.cmd_req.lower() == "EPSV".lower():
-            return self.net_recv_EPSV()
-        total = list()
-        for server in self.servers:
-            raw_inpt = self._get_raw_inpt( server )
-            total.append( raw_inpt )
-        total = list( set( total ) )
-        return total[0]
-
 
 
     def send_data( self, filename ):
@@ -83,14 +73,20 @@ class FtpNet:
                 except:
                     print("Problem in sending data")
                     exit()
+        
     
+    def net_recv( self, servers ):
+        if self.cmd_req == "epsv":
+            return self.net_recv_EPSV()
+        elif self.cmd_req == "list":
+            return self.net_recv_LIST()
+        total = list()
+        for server in servers:
+            raw_inpt = self._get_raw_inpt( server )
+            total.append( raw_inpt )
+        total = list( set( total ) )
+        return b'\n'.join( total )
 
-    def local_recv( self ):
-        local_server = next(server for server in self.servers if server.getpeername()[0] == '127.0.0.1')
-        try:
-            return local_server.recv(256)
-        except( socket.gairerror, socket.timeout ) as e:
-            return b"421 local server failed to recieve\n"
 
 
     def net_recv_EPSV( self ):

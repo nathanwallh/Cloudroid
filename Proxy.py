@@ -42,7 +42,7 @@ class ProxyThread( threading.Thread ):
             self.network.cmd_req = self.curr_cmd
             
             # Get input from network and send to client 
-            net_inpt = self.network.net_recv()
+            net_inpt = self.network.net_recv( self.network.servers )
             print( "Network says: ", net_inpt.decode() ) 
             self.ret_code = self.network.get_code( net_inpt )
             self.send_client( net_inpt )
@@ -53,9 +53,9 @@ class ProxyThread( threading.Thread ):
                 self.client.close()
                 break
             elif self.curr_cmd == "stor":
-                local_inpt = self._STOR()
-                print("Local server says:" + local_inpt.decode())
-                self.send_client( local_inpt )
+                net_inpt = self._STOR()
+                print("Network says:" + net_inpt.decode())
+                self.send_client( net_inpt )
 #            elif cmd == "list":
 #                self._LIST()
 #            elif cmd == "retr":
@@ -68,12 +68,18 @@ class ProxyThread( threading.Thread ):
             return ''
         return raw_data[5:].decode()
 
+
     def _STOR( self ):
-        local_inpt = self.network.local_recv()
-        code = self.network.get_code( local_inpt )
+        loopback = [server for server in self.network.servers if server.getpeername()[0]=='127.0.0.1'];
+        external = [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1'];
+        local_inpt = self.network.net_recv( loopback )
         self.filename = self.user + "/" + self._get_filename( self.cli_inpt )
+        code = self.network.get_code( local_inpt )
         if code == "226":
             self.network.send_data( self.filename )
+        ext_respone = [ s for s in self.network.net_recv( external ).split() if s.isdigit() ]
+        if ext_respone.count( "226" ) != len( ext_respone ):
+            print("Not all servers recieved the file")
         return local_inpt
    
     
