@@ -10,6 +10,10 @@
 # Then, after running the proxy, an FTP client can make a 
 # connection through port 6000 and then things run as usual.
 
+DEBUG_val = False
+def DEBUG(s):
+    if DEBUG_val == True:
+        print(s)
 
 import threading
 import socket
@@ -49,38 +53,57 @@ class ProxyThread( threading.Thread ):
            
         # Handling special cases
             if self.curr_cmd == "user":
-                self.user = self.cli_inpt[5:].decode()
+                self.user = self.cli_inpt[5:].decode().strip()
             elif self.curr_cmd == "quit":
                 self.client.close()
                 break
             elif self.curr_cmd == "epsv":
                 self.network.make_data_connections()
             elif self.curr_cmd == "stor":
-                self.filename = self.user + "/" + self.cli_inpt[5:].decode()
+                self.filename = self.user + "/" + self.cli_inpt[5:].decode().strip()
                 net_inpt = self._STOR()
-                print("Network says:" + net_inpt.decode())
+                print("Network says: " + net_inpt.decode())
                 self.send_client( net_inpt )
-#            elif cmd == "list":
-#                self._LIST()
+            elif self.curr_cmd == "list":
+                net_inpt = self._LIST()
+                print("Network says: " + net_inpt.decode() )
+                self.send_client( net_inpt)
 #            elif cmd == "retr":
 #                self._RETR() 
 #            elif cmd == "epsv":
 #               self._EPSV()
 
 
-# Wait for 226 from the local server. Then send the file to the rest of the servers.
+
+# Wait for 226 from the local server. Then clean all data buffers of the other servers
+# (Assume that all files are identical everywhere on the network)
+    def _LIST( self ):
+        localhost = self._localhost()
+        external = self._exetrnal_hosts()
+        
+        local_inpt = self.network.net_recv( localhost )
+        code = self.network.get_code( local_inpt )
+        if code != "226":
+            return b"421 local server did not send LIST"
+         
+        self.network.clean_data_buffers()
+        self._read_226( external )
+        return local_inpt
+    
+
+
+# Wait for 226 from the local server. Then send the file to the rest of the network.
     def _STOR( self ):
-        localhost = [server for server in self.network.servers if server.getpeername()[0]=='127.0.0.1'];
-        external = [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1'];
+        localhost = self._localhost()
+        external = self._external_hosts()
+        
         local_inpt = self.network.net_recv( localhost )
         code = self.network.get_code( local_inpt )
         if code == "226":
             self.network.send_data( self.filename )
         else:
             return b"421 local server did not recieve the file"
-        ext_respone = [ s for s in self.network.net_recv( external ).split() if s.isdigit() ]
-        if ext_respone.count( "226" ) != len( ext_respone ):
-            print("Not all servers recieved the file")
+        self._read_226( external )
         return local_inpt
    
 
@@ -91,8 +114,6 @@ class ProxyThread( threading.Thread ):
         except( socket.gaierror, socket.timeout ):
             print("The client has suddenly died")
             exit()
-
-
 # Recieve raw data from the client's control connection
     def _get_raw_inpt( self ):
         try:
@@ -101,13 +122,26 @@ class ProxyThread( threading.Thread ):
             print("Client is dead")
             inpt = ''
         return inpt
-
-
 # Extract the command from the client's raw input
     def _get_cmd( self, raw_inpt ):
         if not raw_inpt:
             return ''
         return raw_inpt[:4].decode().strip().lower()
+# Return a list containing only the local FTP server socket
+    def _localhost( self ):
+        return [server for server in self.network.servers if server.getpeername()[0]=='127.0.0.1']
+# Return a list containing all but not the local FTP server sockets
+    def _exetrnal_hosts( self ):
+        return [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1']
+# Receive input from all external servers after a data command was completed, and check that they all sent 226 as the return code.
+    def _read_226( self, external ):
+        DEBUG("Proxy._STOR: starting to read responses from servers")
+        ext_respone = self.network.net_recv( external )
+        DEBUG("Proxy._STOR: finished reading respones from servers")
+        code_ext = [ s for s in ext_respone.split() if s.isdigit() ]
+        if code_ext.count( b'226' ) != len( code_ext ):
+            print("Not all servers returned 226")
+
 
 
 class ProxyServer:
