@@ -23,7 +23,7 @@ class FtpNet:
             try:
                 server_sock.connect( comp )
                 self.servers.append( server_sock )
-            except (socket.gaierror,socket.timeout):
+            except (socket.gaierror,socket.timeout,ConnectionRefusedError):
                 print("connection to " + str(comp) + " has failed")
         for server in self.servers:
             code = self.get_code( self._get_raw_inpt( server ) )
@@ -75,6 +75,7 @@ class FtpNet:
 # Recieve data from all servers on the network, join it together and send back to proxy
     def net_recv( self, servers ):
         if self.cmd_req == "epsv":
+            print("epsv detected")
             return self.net_recv_EPSV()
         total = list()
         for server in servers:
@@ -89,6 +90,7 @@ class FtpNet:
         addresses = list()
         for server in self.servers:
             raw_inpt = self._get_raw_inpt( server )
+            print("raw_inpt recieved from: " + str( server.getpeername() ) )
             code = self.get_code( raw_inpt )
             if code != "229":
                 print("Server: " + str( server.getpeername() ) +" failed with EPSV")
