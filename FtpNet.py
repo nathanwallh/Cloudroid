@@ -63,6 +63,17 @@ class FtpNet:
             return inpt
     
 
+#
+    def clean_data_buffers( self ):
+        for data_s in self.data_sockets:
+            try:
+                data_s.recv(1024)
+                data_s.close()
+            except(socket.timeout) as e:
+                print("connection broke down with " + data_s.getpeername()[0])
+        self.data_sockets = []
+
+
 
 # Send the file specified in <filename> to all servers on the network except localhost
     def send_data( self, filename ):
@@ -72,11 +83,11 @@ class FtpNet:
                     DEBUG("FtpNet.send_data: starting to send the file to the network")
                     data_s.send( f.read().encode() )
                     data_s.close()
-                    self.data_sockets.remove( data_s )
                     DEBUG("FtpNet.send_data: the data had been sent successfully to the network")
                 except:
                     print("Problem in sending data")
                     exit()
+        self.data_sockets = []
         
 # Recieve data from all servers on the network, join it together and send back to proxy
     def net_recv( self, servers ):
