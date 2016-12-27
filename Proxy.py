@@ -10,6 +10,10 @@
 # Then, after running the proxy, an FTP client can make a 
 # connection through port 6000 and then things run as usual.
 
+DEBUG_val = False
+def DEBUG(s):
+    if DEBUG_val == True:
+        print(s)
 
 import threading
 import socket
@@ -49,14 +53,14 @@ class ProxyThread( threading.Thread ):
            
         # Handling special cases
             if self.curr_cmd == "user":
-                self.user = self.cli_inpt[5:].decode()
+                self.user = self.cli_inpt[5:].decode().strip()
             elif self.curr_cmd == "quit":
                 self.client.close()
                 break
             elif self.curr_cmd == "epsv":
                 self.network.make_data_connections()
             elif self.curr_cmd == "stor":
-                self.filename = self.user + "/" + self.cli_inpt[5:].decode()
+                self.filename = self.user + "/" + self.cli_inpt[5:].decode().strip()
                 net_inpt = self._STOR()
                 print("Network says:" + net_inpt.decode())
                 self.send_client( net_inpt )
@@ -68,18 +72,21 @@ class ProxyThread( threading.Thread ):
 #               self._EPSV()
 
 
-# Wait for 226 from the local server. Then send the file to the rest of the servers.
+# Wait for 226 from the local server. Then send the file to the rest of the network.
     def _STOR( self ):
-        localhost = [server for server in self.network.servers if server.getpeername()[0]=='127.0.0.1'];
-        external = [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1'];
+        localhost = [server for server in self.network.servers if server.getpeername()[0]=='127.0.0.1']
+        external = [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1']
         local_inpt = self.network.net_recv( localhost )
         code = self.network.get_code( local_inpt )
         if code == "226":
             self.network.send_data( self.filename )
         else:
             return b"421 local server did not recieve the file"
-        ext_respone = [ s for s in self.network.net_recv( external ).split() if s.isdigit() ]
-        if ext_respone.count( "226" ) != len( ext_respone ):
+        DEBUG("Proxy._STOR: starting to read responses from servers")
+        ext_respone = self.network.net_recv( external )
+        DEBUG("Proxy._STOR: finished reading respones from servers")
+        code_ext = [ s for s in ext_respone.split() if s.isdigit() ]
+        if code_ext.count( b'226' ) != len( code_ext ):
             print("Not all servers recieved the file")
         return local_inpt
    

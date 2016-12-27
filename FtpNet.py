@@ -1,4 +1,9 @@
 #!/usr/bin/python3
+DEBUG_val = False
+def DEBUG(s):
+    if DEBUG_val == True:
+        print(s)
+
 import socket
 
 class FtpNet:
@@ -32,6 +37,7 @@ class FtpNet:
             if code != "220":
                 print("connection to FTP server at" + str( server.getpeername() ) + " has failed")
                 self.servers.remove( server )
+        DEBUG("FtpNet.__init__: servers are " + str( self.servers ) )
         print("Completed connection to servers")
 
 # Extract the code from the FTP servers response
@@ -50,8 +56,6 @@ class FtpNet:
                         raise ValueError("EOF")
                     break
                 except (ValueError,socket.timeout) as e:
-                    if type(e).__name__=='timeout' and self.cmd_req.lower() == "stor":
-                        continue
                     print("connection broke down with " + str( server.getpeername() ) )
                     self.servers.remove( server )
                     inpt = b''
@@ -63,11 +67,13 @@ class FtpNet:
 # Send the file specified in <filename> to all servers on the network except localhost
     def send_data( self, filename ):
         for data_s in self.data_sockets:
-            if data_s.getpeername()[0] != '127.0.0.1':
-                continue
             with open( filename, "r" ) as f:
                 try:
+                    DEBUG("FtpNet.send_data: starting to send the file to the network")
                     data_s.send( f.read().encode() )
+                    data_s.close()
+                    self.data_sockets.remove( data_s )
+                    DEBUG("FtpNet.send_data: the data had been sent successfully to the network")
                 except:
                     print("Problem in sending data")
                     exit()
@@ -75,7 +81,6 @@ class FtpNet:
 # Recieve data from all servers on the network, join it together and send back to proxy
     def net_recv( self, servers ):
         if self.cmd_req == "epsv":
-            print("epsv detected")
             return self.net_recv_EPSV()
         total = list()
         for server in servers:
@@ -90,7 +95,6 @@ class FtpNet:
         addresses = list()
         for server in self.servers:
             raw_inpt = self._get_raw_inpt( server )
-            print("raw_inpt recieved from: " + str( server.getpeername() ) )
             code = self.get_code( raw_inpt )
             if code != "229":
                 print("Server: " + str( server.getpeername() ) +" failed with EPSV")
