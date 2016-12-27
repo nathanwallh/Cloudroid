@@ -68,15 +68,16 @@ class ProxyThread( threading.Thread ):
                 net_inpt = self._LIST()
                 print("Network says: " + net_inpt.decode() )
                 self.send_client( net_inpt)
-#            elif cmd == "retr":
-#                self._RETR() 
-#            elif cmd == "epsv":
-#               self._EPSV()
+            elif self.curr_cmd == "retr":
+                net_inpt = self._RETR() 
+                print("Network says: " + net_inpt.decode() )
+                self.send_client( net_inpt )
 
 
+    def _RETR( self ):
+        return self._LIST()
 
-# Wait for 226 from the local server. Then clean all data buffers of the other servers
-# (Assume that all files are identical everywhere on the network)
+#  Clean all data buffers of the external servers and return the local server output
     def _LIST( self ):
         localhost = self._localhost()
         external = self._exetrnal_hosts()
@@ -84,7 +85,7 @@ class ProxyThread( threading.Thread ):
         local_inpt = self.network.net_recv( localhost )
         code = self.network.get_code( local_inpt )
         if code != "226":
-            return b"421 local server did not send LIST"
+            return b"421 local server did not execute command"
          
         self.network.clean_data_buffers()
         self._read_226( external )
