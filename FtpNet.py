@@ -42,7 +42,7 @@ class FtpNet:
 
 
 # Read all hashes from the data sockets and return them as a list
-    def get_hash_list():
+    def get_hash_list( self ):
         hashlist = []
         for data_s in self.data_sockets:
             try:
@@ -110,7 +110,7 @@ class FtpNet:
 # Recieve data from all servers on the network, join it together and send back to proxy
     def net_recv( self, servers ):
         if self.cmd_req == "epsv":
-            return self.net_recv_EPSV( servers )
+            return self._net_recv_EPSV( servers )
         total = list()
         for server in servers:
             raw_inpt = self._get_raw_inpt( server )
@@ -120,8 +120,8 @@ class FtpNet:
 
 
 # Save all ports for data connection and send back only the localhost port 
-    def net_recv_EPSV( self, servers ):
-        for server in self.servers:
+    def _net_recv_EPSV( self, servers ):
+        for server in servers:
             raw_inpt = self._get_raw_inpt( server )
             code = self.get_code( raw_inpt )
             if code != "229":
@@ -129,13 +129,12 @@ class FtpNet:
             else:
                 port = int( raw_inpt.decode()[3:].split("|")[-2] )
                 self.data_addresses.append( (server.getpeername()[0], port) )
-        
     # There are 2 cases corresponding to whether EPSV was sent as a part of consistency check or not.
         localhost_port = -1
         if 1 == len([ address for address in self.data_addresses if address[0] == "127.0.0.1" ]):
             localhost_port = dict(self.data_addresses)["127.0.0.1"]
             self.data_addresses.remove( ("127.0.0.1", localhost_port) )
-        return str.encode("229 Entering extended passive mode (|||"+str(localhost_port)+"|).\n\r")
+        return str.encode("229 Entering extended passive mode (|||"+str(localhost_port)+"|).\r\n")
 
 
 

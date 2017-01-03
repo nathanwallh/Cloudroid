@@ -35,7 +35,7 @@ class ProxyThread( threading.Thread ):
         self.filename = ''
         self.ret_code = ''
         self.hasher = Hasher.Hasher()
-
+        print( self.get_hashes() )
 # Serve the client
     def run( self ):
         self.client.send(b'220 FTPnetwork\r\n')
@@ -80,28 +80,29 @@ class ProxyThread( threading.Thread ):
 
 
     def _anon_login( self ):
-        self.network.net_send(b"USER anonymous")
-        if self.get_code( self.network.net_recv( self.network.servers ) ) != "330":
+        self.network.net_send(b"USER anonymous\r\n")
+        net_inpt = self.network.net_recv( self.network.servers )
+        if self.network.get_code( net_inpt ) != "331":
             print("Consistency check failure. anonymous user denied by server.")
             return
-        self.network.net_send(b"PASS anonymous")
-        if self.get_code( self.net_recv( self.network.servers ) ) != "230":
+        self.network.net_send(b"PASS anonymous\r\n")
+        net_inpt = self.network.net_recv( self.network.servers )
+        if self.network.get_code( net_inpt ) != "230":
             print("Consistency check failure. anonymous user denied by server.")
             return
+        return
 
     def get_hashes( self ):
         self._anon_login()
-
         external = self._external_hosts()
-        self.network.net_send( b"EPSV", external )
+        self.network.net_send( b"EPSV\r\n", external )
         self.network.cmd_req = "epsv"
         self.network.net_recv( external )
+        self.network.cmd_req = ""
         self.network.make_data_connections()
-        self.network.net_send( b"RETR ServerHash.txt", external )
-        
+        self.network.net_send( b"RETR ServerHash.txt\r\n", external )
         hashlist = self.network.get_hash_list()
         self._read_226( external )
-        self.network.cmd_req = ""
         return hashlist
 
 
