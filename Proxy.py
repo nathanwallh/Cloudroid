@@ -35,7 +35,6 @@ class ProxyThread( threading.Thread ):
         self.filename = ''
         self.ret_code = ''
         self.hasher = Hasher.Hasher()
-        print( self.get_hashes() )
 # Serve the client
     def run( self ):
         self.client.send(b'220 FTPnetwork\r\n')
@@ -101,6 +100,7 @@ class ProxyThread( threading.Thread ):
         self.network.cmd_req = ""
         self.network.make_data_connections()
         self.network.net_send( b"RETR ServerHash.txt\r\n", external )
+        self.network.net_recv( external )
         hashlist = self.network.get_hash_list()
         self._read_226( external )
         return hashlist
