@@ -5,6 +5,7 @@ from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 from os import mkdir
 from os import path
+from os import getcwd
 from UinfoFunc import get_all_usernames_from_file
 
 
@@ -18,6 +19,7 @@ for user, password in users.items():
     if path.exists(user) is False:
         mkdir(user)
     auth.add_user(user, password, './' + user, perm='elradfmw')
+auth.add_anonymous( getcwd() + '/anon' )
 
 handler = FTPHandler
 handler.authorizer = auth
