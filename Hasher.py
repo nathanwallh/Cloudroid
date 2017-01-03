@@ -3,7 +3,7 @@ from hashlib import sha256
 from os import listdir, remove
 from os.path import isfile, isdir, join, split
 from sys import exc_info
-
+#
 BLOCK_SIZE = 256
 YELLOW_COLOR = '\033[93m'
 WHITE_COLOR = '\033[0m'
