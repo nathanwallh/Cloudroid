@@ -19,7 +19,7 @@ for user, password in users.items():
     if path.exists(user) is False:
         mkdir(user)
     auth.add_user(user, password, './' + user, perm='elradfmw')
-auth.add_anonymous( getcwd() + '/anon' )
+auth.add_anonymous( getcwd() + '/Hash' )
 
 handler = FTPHandler
 handler.authorizer = auth
