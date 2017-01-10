@@ -14,11 +14,9 @@ FTPPORT = 8000
 
 # Add users from Uinfo.txt and create directories for them.
 auth = DummyAuthorizer()
-users = get_all_usernames_from_file("Uinfo.txt")
-for user, password in users.items():
-    if path.exists("user_" + user) is False:
-        mkdir("user_" + user)
-    auth.add_user(user, password, './user_' + user, perm='elradfmw')
+if path.exists("user_files") is False:
+    mkdir("user_files")
+auth.add_user("guest", "guest", './user_files', perm='elradfmw')
 auth.add_anonymous( getcwd() + '/Hash' )
 
 handler = FTPHandler

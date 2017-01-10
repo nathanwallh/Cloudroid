@@ -22,6 +22,7 @@ import socket
 import FtpNet
 import UinfoFunc
 import Hasher
+from shutil import rmtree
 
 
 
@@ -35,7 +36,7 @@ class ProxyThread( threading.Thread ):
         self.user = ''
         self.filename = ''
         self.ret_code = ''
-        self.hasher = Hasher.Hasher()
+        #self.hasher = Hasher.Hasher()
 # Serve the client
     def run( self ):
         self.client.send(b'220 FTPnetwork\r\n')
@@ -82,18 +83,63 @@ class ProxyThread( threading.Thread ):
 ### NOT READY YET ###
 # Update all server files
     def _update_( self, server_sock ):
-        users = UinfoFunc.get_all_usernames_from_file(USERS_FILE)
-        for user in users:
-            password = users[user]
-            self._update_user( user, password, server_sock )
-
-### NOT READY YET ###
-# Update user directory from another server
-    def _update_user( self, username, password, server_sock ):
-        
-        self.network.net_send("USER " + username +"\r\n", server_sock)
+        rmtree("user_files")
+        mkdir("user_files")
+        self.network.net_send(b"USER guest\r\n", server_sock)
         self.network.net_recv( server_sock )
-        self.network.net_send("PASS " + password + "\r\n", server_sock)
+        self.network.net_send(b"PASS guest\r\n", server_sock)
+        self.network.net_recv( server_sock )
+        files = self._get_files_list( server_sock )
+        for f in files:
+            self._get_file( f, server_sock )
+
+    def _get_file( self, filename, server_sock ):
+        self.network.net_send(b"EPSV\r\n", server_sock)
+        self.network.cmd_req = "epsv"
+        self.network.net_recv( server_sock )
+        self.network.cmd_req = ""
+        self.network.make_data_connections()
+        self.network.net_send(b"RETR " + filename.encode() + b"\r\n", server_sock)
+        self.network.net_recv( server_sock )
+        file_data = self.network.clean_data_buffers()
+        with open( filename, "w" ) as f:
+            f.write( file_data )
+    
+
+
+    def _get_files_list( self, server_sock ):
+        self.network.net_send(b"EPSV\r\n", server_sock)
+        self.network.cmd_req = "epsv"
+        self.network.net_recv( server_sock )
+        self.network.cmd_req = ""
+        self.network.make_data_connections()
+        self.network.net_send(b"LIST\r\n", server_sock)
+        self.network.net_recv( server_sock )
+        LIST = self.network.clean_data_buffers()
+        files_list_full = LIST.decode().split("\n")
+        files_list_clean = list()
+        for f in files_list_full:
+            files_list_clean.append( f.split()[-1] )
+        return files_list_clean
+
+
+# Get all server hashes on the EXTERNAL network
+    def get_hashes( self ):
+        self._anon_login()
+        external = self._external_hosts()
+        self.network.net_send( b"EPSV\r\n", external )
+        self.network.cmd_req = "epsv"
+        self.network.net_recv( external )
+        self.network.cmd_req = ""
+        self.network.make_data_connections()
+        self.network.net_send( b"RETR ServerHash.txt\r\n", external )
+        self.network.net_recv( external )
+        hashlist = self.network.get_hash_list()
+        self._read_226( external )
+        return hashlist
+
+
+        
         
         
 
@@ -119,22 +165,6 @@ class ProxyThread( threading.Thread ):
         self._update_( self.network.get_server_sock( max_occur[0] ) )
         return
     
-
-# Get all server hashes on the EXTERNAL network
-    def get_hashes( self ):
-        self._anon_login()
-        external = self._external_hosts()
-        self.network.net_send( b"EPSV\r\n", external )
-        self.network.cmd_req = "epsv"
-        self.network.net_recv( external )
-        self.network.cmd_req = ""
-        self.network.make_data_connections()
-        self.network.net_send( b"RETR ServerHash.txt\r\n", external )
-        self.network.net_recv( external )
-        hashlist = self.network.get_hash_list()
-        self._read_226( external )
-        return hashlist
-
 
 
 # Login to all servers on network as anonymous

@@ -63,11 +63,12 @@ class FtpNet:
     def clean_data_buffers( self ):
         for data_s in self.data_sockets:
             try:
-                data_s.recv(1024)
+                data = data_s.recv(2048)
                 data_s.close()
             except(socket.timeout) as e:
                 print("connection broke down with " + data_s.getpeername()[0])
         self.data_sockets = []
+        return data
 
 
 # Send the file specified in <filename> to all servers on the network except localhost
