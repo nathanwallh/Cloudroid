@@ -41,6 +41,10 @@ class FtpNet:
         print("Completed connection to servers")
 
 
+    def get_server_sock( self, serverIP ):
+        return [ sock for sock in self.servers if sock.getpeername()[0]==serverIP ][0]
+
+
 # Read all hashes from the data sockets and return them as a list
     def get_hash_list( self ):
         hashlist = []

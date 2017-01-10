@@ -9,8 +9,8 @@
 # The first server to run should be the FTP server( Server.py )
 # Then, after running the proxy, an FTP client can make a 
 # connection through port 6000 and then things run as usual.
-
-CONSISTENCY_THRESHOLD = 0.3
+USERS_FILE = "Uinfo.txt"
+CONSISTENCY_THRESHOLD = 0.33
 
 DEBUG_val = False
 def DEBUG(s):
@@ -20,6 +20,7 @@ def DEBUG(s):
 import threading
 import socket
 import FtpNet
+import UinfoFunc
 import Hasher
 
 
@@ -78,19 +79,48 @@ class ProxyThread( threading.Thread ):
 
 
 
-    def _anon_login( self ):
-        self.network.net_send(b"USER anonymous\r\n")
-        net_inpt = self.network.net_recv( self.network.servers )
-        if self.network.get_code( net_inpt ) != "331":
-            print("Consistency check failure. anonymous user denied by server.")
-            return
-        self.network.net_send(b"PASS anonymous\r\n")
-        net_inpt = self.network.net_recv( self.network.servers )
-        if self.network.get_code( net_inpt ) != "230":
-            print("Consistency check failure. anonymous user denied by server.")
-            return
-        return
+### NOT READY YET ###
+# Update all server files
+    def _update_( self, server_sock ):
+        users = UinfoFunc.get_all_usernames_from_file(USERS_FILE)
+        for user in users:
+            password = users[user]
+            self._update_user( user, password, server_sock )
 
+### NOT READY YET ###
+# Update user directory from another server
+    def _update_user( self, username, password, server_sock ):
+        
+        self.network.net_send("USER " + username +"\r\n", server_sock)
+        self.network.net_recv( server_sock )
+        self.network.net_send("PASS " + password + "\r\n", server_sock)
+        
+        
+
+
+### NOT READY YET ###
+# Check consistency of server with others on network
+    def _consistency_check( self ):
+        threshold = round( self.network.size() * CONSISTENCY_THRESHOLD )
+        local_hash = self.hasher.get_server_hash()
+        network_hashes = self.get_hashes()
+        for server_hash in network_hashes:
+            if server_hash[1] != local_hash:
+                threshold -= 1
+    # Server is consistent
+        if threshold > 0:
+            return
+    # Server is not consistent
+        occurrences_list = []
+        for hsh in network_hashes:
+            occurrences = len( [h[1] for h in network_hashes if h[1] == hsh[1]] )
+            occurrences_list.append(  ( h[0], occurrences) )
+        max_occur = max( occurences_list, key=lambda tup: tup[1] )
+        self._update_( self.network.get_server_sock( max_occur[0] ) )
+        return
+    
+
+# Get all server hashes on the EXTERNAL network
     def get_hashes( self ):
         self._anon_login()
         external = self._external_hosts()
@@ -106,7 +136,24 @@ class ProxyThread( threading.Thread ):
         return hashlist
 
 
-#    def _consistency_check( self ):
+
+# Login to all servers on network as anonymous
+    def _anon_login( self ):
+        self.network.net_send(b"USER anonymous\r\n")
+        net_inpt = self.network.net_recv( self.network.servers )
+        if self.network.get_code( net_inpt ) != "331":
+            print("Consistency check failure. anonymous user denied by server.")
+            return
+        self.network.net_send(b"PASS anonymous\r\n")
+        net_inpt = self.network.net_recv( self.network.servers )
+        if self.network.get_code( net_inpt ) != "230":
+            print("Consistency check failure. anonymous user denied by server.")
+            return
+        return
+
+
+
+
                     
 
     def _RETR( self ):

@@ -204,23 +204,23 @@ def main():
 
 
     hasher = Hasher()
-    hasher.create_file("Oren", "1.txt")
-    hasher.create_file("Oren", "2.txt")
-    hasher.create_file("Oren1", "1.txt")
-    hasher.create_file("Oren1", "2.txt")
+    #hasher.create_file("Oren", "1.txt")
+    #hasher.create_file("Oren", "2.txt")
+    #hasher.create_file("Oren1", "1.txt")
+    #hasher.create_file("Oren1", "2.txt")
     s = hasher.get_server_hash()
     print(s)
-    hasher.update_file("Oren1", "2.txt")
-    s = hasher.get_server_hash()
-    print(s)
-    hasher.delete_file("Oren", "1.txt")
-    hasher.delete_file("Oren", "2.txt")
-    hasher.delete_file("Oren1", "1.txt")
-    hasher.delete_file("Oren1", "2.txt")
+    #hasher.update_file("Oren1", "2.txt")
+    #s = hasher.get_server_hash()
+    #print(s)
+    #hasher.delete_file("Oren", "1.txt")
+    #hasher.delete_file("Oren", "2.txt")
+    #hasher.delete_file("Oren1", "1.txt")
+    #hasher.delete_file("Oren1", "2.txt")
 
-    s = hasher.get_server_hash()
-    hasher.export_hash_server_to_file()
-    print(s)
+#    s = hasher.get_server_hash()
+#    hasher.export_hash_server_to_file()
+#    print(s)
 
 
 if __name__ == "__main__":
