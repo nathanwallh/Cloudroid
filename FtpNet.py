@@ -37,7 +37,6 @@ class FtpNet:
             if code != "220":
                 print("connection to FTP server at" + str( server.getpeername() ) + " has failed")
                 self.servers.remove( server )
-        DEBUG("FtpNet.__init__: servers are " + str( self.servers ) )
         print("Completed connection to servers")
 
 
@@ -50,7 +49,7 @@ class FtpNet:
         hashlist = []
         for data_s in self.data_sockets:
             try:
-                s_hash = data_s.recv( 128 )
+                s_hash = data_s.recv( 128 ).decode()
                 hashlist.append( (data_s.getpeername()[0], s_hash) )
                 data_s.close()
             except( socket.timeout ) as e:
@@ -76,10 +75,8 @@ class FtpNet:
         for data_s in self.data_sockets:
             with open( filename, "r" ) as f:
                 try:
-                    DEBUG("FtpNet.send_to_data_connection: starting to send the file to the network")
                     data_s.send( f.read().encode() )
                     data_s.close()
-                    DEBUG("FtpNet.send_to_data_connection: the data had been sent successfully to the network")
                 except:
                     print("Problem in sending data")
                     exit()
@@ -90,12 +87,14 @@ class FtpNet:
     def make_data_connections( self ):
         for comp in self.data_addresses:
             data_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-            data_sock.settimeout(3)
             try:
+                DEBUG("FtpNet.make_data_connection: connecting to: " + str(comp) )
                 data_sock.connect( comp )
                 self.data_sockets.append( data_sock )
-            except (socket.gaierror,socket.timeout):
-                print("Data connection to " + str( data_sock.getpeername() ) + " has failed." )
+            except (socket.gaierror,socket.timeout,ConnectionRefusedError) as e:
+                print("Data connection to " + str( comp ) + " has failed." )
+                exit()
+        self.data_addresses = []
 
 
 

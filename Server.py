@@ -23,7 +23,7 @@ handler = FTPHandler
 handler.authorizer = auth
 
 server = FTPServer(('', FTPPORT), handler)
-server.max_cons = 5
-server.max_cons_per_ip = 5
+server.max_cons = 10
+server.max_cons_per_ip = 10
 
 server.serve_forever()
