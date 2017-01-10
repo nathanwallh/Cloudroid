@@ -16,9 +16,9 @@ FTPPORT = 8000
 auth = DummyAuthorizer()
 users = get_all_usernames_from_file("Uinfo.txt")
 for user, password in users.items():
-    if path.exists(user) is False:
-        mkdir(user)
-    auth.add_user(user, password, './' + user, perm='elradfmw')
+    if path.exists("user_" + user) is False:
+        mkdir("user_" + user)
+    auth.add_user(user, password, './user_' + user, perm='elradfmw')
 auth.add_anonymous( getcwd() + '/Hash' )
 
 handler = FTPHandler
