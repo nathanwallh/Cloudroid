@@ -41,12 +41,14 @@ def save_file(filename, folder_path):
         exception_handling(str(e))
         return None
 
+
 class Hasher:
     def __init__(self):
         self.hasher = sha256()
         self.__sha_size = 256
         self.__hasher_filename = "Hash/ServerHash.txt"
-        self.__server_hash = self.read_hash_server_file()
+        self.__server_hash = "0"
+        self.check_if_server_updated()
 
     def read_hash_server_file(self):
         self.__server_hash = '0' * (self.__sha_size >> 2)
@@ -96,7 +98,12 @@ class Hasher:
             exception_handling(str(e))
             return False
 
-        return server_hash == self.__server_hash
+        if server_hash == self.__server_hash:
+            return True
+
+        self.__server_hash = server_hash
+        self.export_hash_server_to_file()
+        return False
 
     def check_if_server_equal_to_hash(self, server_hash):
         return self.__server_hash == server_hash
