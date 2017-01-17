@@ -37,7 +37,7 @@ class ProxyThread( threading.Thread ):
         self.user = ''
         self.filename = ''
         self.ret_code = ''
-        self.hash = "123";
+        self.hash = Hasher.Hasher()
         self._consistency_check()
 # Serve the client
     def run( self ):
@@ -68,7 +68,7 @@ class ProxyThread( threading.Thread ):
                 net_inpt = self._STOR()
             elif self.curr_cmd == "list" or self.curr_cmd == "retr":
                 net_inpt = self._LISTRETR()
-            if self.curr_cmd == "epsv" or self.curr_cmd == "list" or self.curr_cmd =="retr":
+            if self.curr_cmd == "stor" or self.curr_cmd == "list" or self.curr_cmd =="retr":
                 self.EPSV = False
                 self.send_client( net_inpt)
                 print("Network says: " + net_inpt.decode())
@@ -85,10 +85,9 @@ class ProxyThread( threading.Thread ):
         DEBUG("_consistency_check: Server started consistency check")
         threshold = round( self.network.size() * CONSISTENCY_THRESHOLD )
         DEBUG("_consistency_check: networks size = " + str( self.network.size() ) + ". threshold = " +str(threshold) )
-        local_hash = self.hash
         network_hashes = self.get_hashes()
         for server_hash in network_hashes:
-            if server_hash[1] != local_hash:
+            if self.hash.isEqual( server_hash[1] ) == False:
                 threshold -= 1
     # Server is consistent
         if threshold > 0:

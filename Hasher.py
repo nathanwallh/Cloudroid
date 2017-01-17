@@ -115,7 +115,7 @@ class Hasher:
         self.export_hash_server_to_file()
         return False
 
-    def check_if_server_equal_to_hash(self, server_hash):
+    def isEqual(self, server_hash):
         return self.__server_hash == server_hash
 
     def make_sha256_for_folder(self, folder_path):
