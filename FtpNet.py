@@ -90,8 +90,8 @@ class FtpNet:
 
 
 # Make data connection with all addresses in self.data_addresses
-    def make_data_connections( self ):
-        for comp in self.data_addresses:
+    def _make_data_connections( self, data_addresses):
+        for comp in data_addresses:
             data_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
             try:
                 DEBUG("FtpNet.make_data_connection: connecting to: " + str(comp) )
@@ -100,7 +100,6 @@ class FtpNet:
             except (socket.gaierror,socket.timeout,ConnectionRefusedError) as e:
                 print("Data connection to " + str( comp ) + " has failed." )
                 exit()
-        self.data_addresses = []
 
 
 
@@ -131,6 +130,7 @@ class FtpNet:
 
 # Save all ports for data connection and send back only the localhost port 
     def _net_recv_EPSV( self, servers ):
+        data_addresses = []
         for server in servers:
             raw_inpt = self._get_raw_inpt( server )
             code = self.get_code( raw_inpt )
@@ -138,12 +138,13 @@ class FtpNet:
                 print("Server: " + str( server.getpeername() ) +" failed with EPSV")
             else:
                 port = int( raw_inpt.decode()[3:].split("|")[-2] )
-                self.data_addresses.append( (server.getpeername()[0], port) )
+                data_addresses.append( (server.getpeername()[0], port) )
     # There are 2 cases corresponding to whether EPSV was sent as a part of consistency check or not.
         localhost_port = -1
-        if 1 == len([ address for address in self.data_addresses if address[0] == "127.0.0.1" ]):
-            localhost_port = dict(self.data_addresses)["127.0.0.1"]
-            self.data_addresses.remove( ("127.0.0.1", localhost_port) )
+        if 1 == len([ address for address in data_addresses if address[0] == "127.0.0.1" ]):
+            localhost_port = dict(data_addresses)["127.0.0.1"]
+            data_addresses.remove( ("127.0.0.1", localhost_port) )
+        self._make_data_connections( data_addresses )
         return str.encode("229 Entering extended passive mode (|||"+str(localhost_port)+"|).\r\n")
 
 

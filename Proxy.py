@@ -62,7 +62,6 @@ class ProxyThread( threading.Thread ):
                 self.client.close()
                 break 
             elif self.curr_cmd == "epsv":
-                self.network.make_data_connections()
                 self.EPSV = True;
             elif self.curr_cmd == "stor":
                 self.filename = self.user + "/" + self.cli_inpt[5:].decode().strip()
@@ -137,12 +136,11 @@ class ProxyThread( threading.Thread ):
         if self.network.get_code( net_inpt ) != "229":
             print("_get_files_list_: failed with epsv. Aborting")
             exit()
-        self.network.make_data_connections()
-        self.network.net_send(b"LISTRETR\r\n", server_sock)
+        self.network.net_send(b"LIST\r\n", server_sock)
         self.network.net_recv( server_sock )
-        LISTRETR = self.network.clean_data_buffers()
+        fList = self.network.clean_data_buffers()
         self._read_226( server_sock )
-        files_list_full = LISTRETR.decode().split("\n")[:-1]
+        files_list_full = fList.decode().split("\n")[:-1]
         files_list_clean = list()
         DEBUG("_get_files_list: got full files list: " + str(files_list_full) )
         for f in files_list_full:
@@ -157,7 +155,6 @@ class ProxyThread( threading.Thread ):
         self.network.cmd_req = "epsv"
         self.network.net_recv( server_sock )
         self.network.cmd_req = ""
-        self.network.make_data_connections()
         self.network.net_send(b"RETR " + filename.encode() + b"\r\n", server_sock)
         self.network.net_recv( server_sock )
         file_data = self.network.clean_data_buffers()
@@ -175,7 +172,6 @@ class ProxyThread( threading.Thread ):
         self.network.cmd_req = "epsv"
         self.network.net_recv( external )
         self.network.cmd_req = ""
-        self.network.make_data_connections()
         self.network.net_send( b"RETR ServerHash.txt\r\n", external )
         self.network.net_recv( external )
         hashlist = self.network.get_hash_list()
