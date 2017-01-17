@@ -3,10 +3,14 @@ from hashlib import sha256
 from os import listdir, remove
 from os.path import isfile, isdir, join, split
 from sys import exc_info
+import asyncio
+import threading
+
 #
 BLOCK_SIZE = 256
 YELLOW_COLOR = '\033[93m'
 WHITE_COLOR = '\033[0m'
+UPDATE_TIMER = 3
 
 hex_2_binary = lambda hex_str: \
         bin(int('1' + hex_str, 16))[3:]
@@ -50,6 +54,9 @@ class Hasher:
         self.__server_hash = "0"
         self.check_if_server_updated()
 
+        self.automatic_update_hash_server()
+
+
     def read_hash_server_file(self):
         self.__server_hash = '0' * (self.__sha_size >> 2)
         if isfile(self.__hasher_filename):
@@ -85,15 +92,18 @@ class Hasher:
 
     def check_if_server_updated(self):
         server_hash = '0' * (self.__sha_size >> 2)
-        folder_list = listdir()
+
+        # try:
+        #     for name_folder in listdir():
+        #         if name_folder != self.__hasher_filename.split("/")[0] and isdir(name_folder) and '.' not in name_folder:
+        #             for filename in listdir(name_folder):
         try:
-            for name_folder in folder_list:
-                if str(name_folder).split(".").__len__() > 2:
-                    for filename in name_folder:
-                        sha256_hash = self.open_file(filename, name_folder, "rb")
-                        if sha256_hash is None:
-                            return False
-                        server_hash = binary_2_hex(xor(server_hash, sha256_hash))
+            name_folder = "user_files"
+            for filename in listdir(name_folder):
+                sha256_hash = self.open_file(filename, name_folder, "rb")
+                if sha256_hash is None:
+                    return False
+                server_hash = binary_2_hex(xor(server_hash, sha256_hash))
         except Exception as e:
             exception_handling(str(e))
             return False
@@ -142,7 +152,6 @@ class Hasher:
             save_file(filename, folder_path)
             if sha256_hash is None:
                 return None
-            # Why?!
             sha256_hash = self.open_file(filename, folder_path, "rb")
             if sha256_hash is None:
                 return None
@@ -197,31 +206,17 @@ class Hasher:
     def get_server_hash(self):
         return self.__server_hash
 
+    def automatic_update_hash_server(self):
+        self.check_if_server_updated()
+        threading.Timer(UPDATE_TIMER, self.automatic_update_hash_server).start()
+
+
 
 def main():
-    server_hash = '0' * (256 >> 2)
-    # 8b8ee48308eeff9f9f293463b5d32d465d47c7299ee79120f3c9bec5bc5ec34f
-
-
-    hasher = Hasher()
-    hasher.create_file("Oren", "1.txt")
-    hasher.create_file("Oren", "2.txt")
-    hasher.create_file("Oren1", "1.txt")
-    hasher.create_file("Oren1", "2.txt")
-    s = hasher.get_server_hash()
-    print(s)
-    hasher.update_file("Oren1", "2.txt")
-    s = hasher.get_server_hash()
-    print(s)
-    hasher.delete_file("Oren", "1.txt")
-    hasher.delete_file("Oren", "2.txt")
-    hasher.delete_file("Oren1", "1.txt")
-    hasher.delete_file("Oren1", "2.txt")
-
-    s = hasher.get_server_hash()
-    hasher.export_hash_server_to_file()
-    print(s)
+    hsh = Hasher();
 
 
 if __name__ == "__main__":
-    main()
+     main()
+
+
