@@ -57,6 +57,11 @@ class FtpNet:
         self.data_sockets = []
         return hashlist
 
+# Close all data connections
+    def close_data_connections( self ):
+        for data_s in self.data_sockets:
+            data_s.close()
+        self.data_sockets = []
 
 # Read all buffers from data sockets and close them
     def clean_data_buffers( self ):

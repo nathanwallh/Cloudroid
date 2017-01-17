@@ -43,42 +43,42 @@ class ProxyThread( threading.Thread ):
     def run( self ):
         self.client.send(b'220 FTPnetwork\r\n')
         while True:
-        # Get input from client and send to network
+        # Get input from the client
             self.cli_inpt = self._get_raw_inpt()
             print( "Client says: ", self.cli_inpt.decode() ) 
-            self.network.net_send(self.cli_inpt, self.network.servers)
             if not self.cli_inpt:
                 break
             self.curr_cmd = self._get_cmd( self.cli_inpt )
             self.network.cmd_req = self.curr_cmd
-            
+        # Send the client's input to the network
+            if self.curr_cmd == "list" or self.curr_cmd =="retr":
+                self.network.net_send(self.cli_inpt, self._localhost())
+            else:
+                self.network.net_send(self.cli_inpt, self.network.servers)
+        # Handling special commands
+            if self.curr_cmd == "user":
+                self.user = self.cli_inpt[5:].decode().strip()
+            elif self.curr_cmd == "quit":
+                self.client.close()
+                break 
+            elif self.curr_cmd == "epsv":
+                self.network.make_data_connections()
+                self.EPSV = True;
+            elif self.curr_cmd == "stor":
+                self.filename = self.user + "/" + self.cli_inpt[5:].decode().strip()
+                net_inpt = self._STOR()
+            elif self.curr_cmd == "list" or self.curr_cmd == "retr":
+                net_inpt = self._LISTRETR()
+            if self.curr_cmd == "epsv" or self.curr_cmd == "list" or self.curr_cmd =="retr":
+                self.EPSV = False
+                self.send_client( net_inpt)
+                print("Network says: " + net_inpt.decode())
         # Get input from network and send to client 
             net_inpt = self.network.net_recv( self.network.servers )
             print( "Network says: ", net_inpt.decode() ) 
             self.ret_code = self.network.get_code( net_inpt )
             self.send_client( net_inpt )
            
-        # Handling special cases
-            if self.curr_cmd == "user":
-                self.user = self.cli_inpt[5:].decode().strip()
-            elif self.curr_cmd == "quit":
-                self.client.close()
-                break
-            elif self.curr_cmd == "epsv":
-                self.network.make_data_connections()
-            elif self.curr_cmd == "stor":
-                self.filename = self.user + "/" + self.cli_inpt[5:].decode().strip()
-                net_inpt = self._STOR()
-                print("Network says: " + net_inpt.decode())
-                self.send_client( net_inpt )
-            elif self.curr_cmd == "list":
-                net_inpt = self._LIST()
-                print("Network says: " + net_inpt.decode() )
-                self.send_client( net_inpt)
-            elif self.curr_cmd == "retr":
-                net_inpt = self._RETR() 
-                print("Network says: " + net_inpt.decode() )
-                self.send_client( net_inpt )
 
 
 # Check consistency of server with others on network
@@ -138,11 +138,11 @@ class ProxyThread( threading.Thread ):
             print("_get_files_list_: failed with epsv. Aborting")
             exit()
         self.network.make_data_connections()
-        self.network.net_send(b"LIST\r\n", server_sock)
+        self.network.net_send(b"LISTRETR\r\n", server_sock)
         self.network.net_recv( server_sock )
-        LIST = self.network.clean_data_buffers()
+        LISTRETR = self.network.clean_data_buffers()
         self._read_226( server_sock )
-        files_list_full = LIST.decode().split("\n")[:-1]
+        files_list_full = LISTRETR.decode().split("\n")[:-1]
         files_list_clean = list()
         DEBUG("_get_files_list: got full files list: " + str(files_list_full) )
         for f in files_list_full:
@@ -201,23 +201,15 @@ class ProxyThread( threading.Thread ):
 
 
 
-                    
-
-    def _RETR( self ):
-        return self._LIST()
 
 #  Clean all data buffers of the external servers and return the local server output
-    def _LIST( self ):
+    def _LISTRETR( self ):
         localhost = self._localhost()
-        external = self._external_hosts()
         
         local_inpt = self.network.net_recv( localhost )
         code = self.network.get_code( local_inpt )
-        if code != "226":
-            return b"421 local server did not execute command"
          
-        self.network.clean_data_buffers()
-        self._read_226( external )
+        self.network.close_data_connections()
         return local_inpt
     
 
