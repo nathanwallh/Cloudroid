@@ -152,7 +152,6 @@ class Hasher:
             save_file(filename, folder_path)
             if sha256_hash is None:
                 return None
-            # Why?!
             sha256_hash = self.open_file(filename, folder_path, "rb")
             if sha256_hash is None:
                 return None
@@ -209,17 +208,16 @@ class Hasher:
 
     def automatic_update_hash_server(self):
         self.check_if_server_updated()
-        print(self.get_server_hash())
+        print("number of threads: " + str( threading.activeCount() ) )
         threading.Timer(UPDATE_TIMER, self.automatic_update_hash_server).start()
 
 
-#
-# def main():
-#
-#     print("11111111")
-#
-#
-# if __name__ == "__main__":
-#     main()
+
+def main():
+    hsh = Hasher();
+
+
+if __name__ == "__main__":
+     main()
 
 
