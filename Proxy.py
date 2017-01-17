@@ -1,10 +1,7 @@
 #!/usr/bin/python3
 
-# Proxy server that redirects FTP traffic to the right
-#computer on the network.
-
-# Technical:
-# The proxy server listens on port 6000, while the FTP
+# Proxy server that broadcasts FTP requests to the network.
+# The proxy is listening on port 6000
 # server listens on port 8000.
 # The first server to run should be the FTP server( Server.py )
 # Then, after running the proxy, an FTP client can make a 
@@ -96,25 +93,20 @@ class ProxyThread( threading.Thread ):
 
 # Check consistency of server with others on network
     def _consistency_check( self ):
-        DEBUG("_consistency_check: Server started consistency check")
         threshold = round( self.network.size() * CONSISTENCY_THRESHOLD )
-        DEBUG("_consistency_check: networks size = " + str( self.network.size() ) + ". threshold = " +str(threshold) )
         network_hashes = self.get_hashes()
         for server_hash in network_hashes:
             if self.hash.isEqual( server_hash[1] ) == False:
                 threshold -= 1
     # Server is consistent
         if threshold > 0:
-            DEBUG("_consistency_check: Server found to be consistent")
             return
     # Server is not consistent
-        DEBUG("_consistency_check: Server found to be not consistent")
         occurrences_list = []
         for hsh in network_hashes:
             occurrences = len( [h[1] for h in network_hashes if h[1] == hsh[1]] )
             occurrences_list.append(  ( hsh[0], occurrences) )
         max_occur = max( occurrences_list, key=lambda tup: tup[1] )
-        DEBUG("_consistency_check: Updating from the server:" + max_occur[0])
         self._not_consistent( [ self.network.get_server_sock( max_occur[0] ) ] )
         return
     
@@ -124,20 +116,16 @@ class ProxyThread( threading.Thread ):
     def _not_consistent( self, server_sock ):
         rmtree("user_files")
         mkdir("user_files")
-        DEBUG("_not_consistent: Cleaned directory user_files")
         self.network.net_send(b"USER guest\r\n", server_sock)
         self.network.net_recv( )
         self.network.net_send(b"PASS guest\r\n", server_sock)
         net_inpt = self.network.net_recv( )
-        DEBUG("_not_consistent: Logged in as guest")
         if self.network.get_code( net_inpt ) != "230":
             print("_not_consistent: Failed to login as guest. Aborting.")
             exit()
         files = self._get_files_list( server_sock )
-        DEBUG("_not_consistent: Got files list to retrieve: " + str(files))
         for f in files:
             self._get_file( f, server_sock )
-            DEBUG("_not_consistent: Updated the file " + f)
 
 
 
@@ -155,7 +143,6 @@ class ProxyThread( threading.Thread ):
         self._read_226( server_sock )
         files_list_full = fList.decode().split("\n")[:-1]
         files_list_clean = list()
-        DEBUG("_get_files_list: got full files list: " + str(files_list_full) )
         for f in files_list_full:
             files_list_clean.append( f.split()[-1] )
         return files_list_clean

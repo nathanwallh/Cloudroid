@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+
+
 DEBUG_val = False
 def DEBUG(s):
     if DEBUG_val == True:
@@ -107,7 +109,6 @@ class FtpNet:
         for comp in data_addresses:
             data_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
             try:
-                DEBUG("FtpNet.make_data_connection: connecting to: " + str(comp) )
                 data_sock.connect( comp )
                 self.data_sockets.append( data_sock )
             except (socket.gaierror,socket.timeout,ConnectionRefusedError) as e:
