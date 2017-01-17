@@ -208,7 +208,6 @@ class Hasher:
 
     def automatic_update_hash_server(self):
         self.check_if_server_updated()
-        print("number of threads: " + str( threading.activeCount() ) )
         threading.Timer(UPDATE_TIMER, self.automatic_update_hash_server).start()
 
 
