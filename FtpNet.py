@@ -14,6 +14,7 @@ class FtpNet:
         self.data_sockets = list()
         self.cmd_req = '' 
         self.data_addresses = list()
+        self.external = list()
 
     # Connect to the addresses in netfile
         with open( netfile, 'r' ) as f:
@@ -21,10 +22,10 @@ class FtpNet:
         addresses = [ (address.split(':')[0],int(address.split(':')[1])) for address in raw_addr ]
         for comp in addresses:
             server_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-            if comp[0] != '127.0.0.1':
-                server_sock.settimeout(3)
-            else:
-                server_sock.settimeout(120)
+#            if comp[0] != '127.0.0.1':
+#                server_sock.settimeout(3)
+#            else:
+#                server_sock.settimeout(120)
             try:
                 server_sock.connect( comp )
                 self.servers.append( server_sock )
@@ -37,8 +38,8 @@ class FtpNet:
             if code != "220":
                 print("connection to FTP server at" + str( server.getpeername() ) + " has failed")
                 self.servers.remove( server )
+        self.external = [server for server in self.servers if server.getpeername()[0]!='127.0.0.1'];
         print("Completed connection to servers")
-
 
     def get_server_sock( self, serverIP ):
         return [ sock for sock in self.servers if sock.getpeername()[0]==serverIP ][0]
@@ -87,6 +88,16 @@ class FtpNet:
                     print("Problem in sending data")
                     exit()
         self.data_sockets = []
+        self._read_226()
+
+
+# Receive input from all external servers after a data command was completed, and check that they all sent 226 as the return code.
+    
+    def _read_226( self ):
+        servers_respone = self.net_recv( )
+        codes = [ s for s in servers_respone.split() if s.isdigit() ]
+        if codes.count( b'226' ) != len( codes ):
+            print("Not all servers returned 226")
 
 
 # Make data connection with all addresses in self.data_addresses
@@ -116,12 +127,23 @@ class FtpNet:
                 self.servers.remove ( server )
 
 
+
+# Return a list containing onlt the local FTP server socket
+    def localhost( self ):
+        return [server for server in self.servers if server.getpeername()[0]=='127.0.0.1']
+
+
+# Return a list containing all but not the local FTP server sockets
+    def external_hosts( self ):
+        return [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1'];
+
+
 # Recieve data from all servers on the network, join it together and send back to proxy
-    def net_recv( self, servers ):
+    def net_recv( self ):
         if self.cmd_req == "epsv":
-            return self._net_recv_EPSV( servers )
+            return self._net_recv_EPSV( )
         total = list()
-        for server in servers:
+        for server in self.external:
             raw_inpt = self._get_raw_inpt( server )
             total.append( raw_inpt )
         total = list( set( total ) )
@@ -129,9 +151,9 @@ class FtpNet:
 
 
 # Save all ports for data connection and send back only the localhost port 
-    def _net_recv_EPSV( self, servers ):
+    def _net_recv_EPSV( self  ):
         data_addresses = []
-        for server in servers:
+        for server in self.external:
             raw_inpt = self._get_raw_inpt( server )
             code = self.get_code( raw_inpt )
             if code != "229":
@@ -140,12 +162,14 @@ class FtpNet:
                 port = int( raw_inpt.decode()[3:].split("|")[-2] )
                 data_addresses.append( (server.getpeername()[0], port) )
     # There are 2 cases corresponding to whether EPSV was sent as a part of consistency check or not.
-        localhost_port = -1
-        if 1 == len([ address for address in data_addresses if address[0] == "127.0.0.1" ]):
-            localhost_port = dict(data_addresses)["127.0.0.1"]
-            data_addresses.remove( ("127.0.0.1", localhost_port) )
         self._make_data_connections( data_addresses )
-        return str.encode("229 Entering extended passive mode (|||"+str(localhost_port)+"|).\r\n")
+        return ''
+
+# Extract the code from the FTP servers response
+    def get_code( self, raw_inpt ):
+        if not raw_inpt:
+            return ''
+        return raw_inpt.decode().split()[0]
 
 
 
@@ -170,8 +194,4 @@ class FtpNet:
         return len( self.servers )
 
 
-# Extract the code from the FTP servers response
-    def get_code( self, raw_inpt ):
-        if not raw_inpt:
-            return ''
-        return raw_inpt.decode().split()[0]
+

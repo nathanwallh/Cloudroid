@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Proxy server that redirects FTP traffic to the right
-# computer on the network.
+#computer on the network.
 
 # Technical:
 # The proxy server listens on port 6000, while the FTP
@@ -29,55 +29,72 @@ from shutil import rmtree
 
 class ProxyThread( threading.Thread ):
     def __init__( self, client ): 
-        self.client = client
-        self.network = FtpNet.FtpNet('Netinfo.txt')
         threading.Thread.__init__( self )
-        self.cli_inpt = ''
         self.curr_cmd = ''
         self.user = ''
         self.filename = ''
-        self.ret_code = ''
+        self.EPSV = False
+        self.client = client
+        self.network = FtpNet.FtpNet('Netinfo.txt')
+        self.localhost_s = self.network.localhost()
         self.hash = Hasher.Hasher()
-        self._consistency_check()
+        #self._consistency_check()
+        self.repeater = threading.Thread( target=self.localhost_repeater )
+        self.repeater.daemon = True
+
+
 # Serve the client
     def run( self ):
         self.client.send(b'220 FTPnetwork\r\n')
+        self.repeater.start()
         while True:
         # Get input from the client
-            self.cli_inpt = self._get_raw_inpt()
-            print( "Client says: ", self.cli_inpt.decode() ) 
-            if not self.cli_inpt:
+            cli_inpt = self._get_raw_inpt()
+            print( "Client says: ", cli_inpt.decode() ) 
+            if not cli_inpt:
                 break
-            self.curr_cmd = self._get_cmd( self.cli_inpt )
+            self.curr_cmd = self._get_cmd( cli_inpt )
             self.network.cmd_req = self.curr_cmd
         # Send the client's input to the network
             if self.curr_cmd == "list" or self.curr_cmd =="retr":
-                self.network.net_send(self.cli_inpt, self._localhost())
+                self.network.net_send(cli_inpt, self.localhost_s)
             else:
-                self.network.net_send(self.cli_inpt, self.network.servers)
+                self.network.net_send(cli_inpt, self.network.servers)
         # Handling special commands
             if self.curr_cmd == "user":
-                self.user = self.cli_inpt[5:].decode().strip()
+                self.user = cli_inpt[5:].decode().strip()
             elif self.curr_cmd == "quit":
                 self.client.close()
                 break 
             elif self.curr_cmd == "epsv":
                 self.EPSV = True;
             elif self.curr_cmd == "stor":
-                self.filename = self.user + "/" + self.cli_inpt[5:].decode().strip()
-                net_inpt = self._STOR()
+                self.filename = self.user + "/" + cli_inpt[5:].decode().strip()
+                if self.EPSV == True:
+                    net_inpt = self._STOR()
             elif self.curr_cmd == "list" or self.curr_cmd == "retr":
-                net_inpt = self._LISTRETR()
-            if self.curr_cmd == "stor" or self.curr_cmd == "list" or self.curr_cmd =="retr":
+                if self.EPSV == True:
+                    net_inpt = self._LISTRETR()
+            
+            if self.EPSV == True and \
+                (self.curr_cmd == "stor" or self.curr_cmd == "list" or self.curr_cmd =="retr"):
                 self.EPSV = False
-                self.send_client( net_inpt)
-                print("Network says: " + net_inpt.decode())
-        # Get input from network and send to client 
-            net_inpt = self.network.net_recv( self.network.servers )
-            print( "Network says: ", net_inpt.decode() ) 
-            self.ret_code = self.network.get_code( net_inpt )
-            self.send_client( net_inpt )
-           
+        # Get input from network
+            net_inpt = self.network.net_recv( )
+        
+
+    def localhost_repeater( self ):
+        while True:
+            try:
+                server_response = self.localhost_s[0].recv(1024)
+                print("Network says: " + server_response.decode())
+                if not server_response:
+                    exit()
+                self.send_client( server_response )
+            except:
+                if self.curr_cmd != "quit":
+                    print("localhost_listener: failed to read from server or send to client")
+                exit()
 
 
 # Check consistency of server with others on network
@@ -112,9 +129,9 @@ class ProxyThread( threading.Thread ):
         mkdir("user_files")
         DEBUG("_not_consistent: Cleaned directory user_files")
         self.network.net_send(b"USER guest\r\n", server_sock)
-        self.network.net_recv( server_sock )
+        self.network.net_recv( )
         self.network.net_send(b"PASS guest\r\n", server_sock)
-        net_inpt = self.network.net_recv( server_sock )
+        net_inpt = self.network.net_recv( )
         DEBUG("_not_consistent: Logged in as guest")
         if self.network.get_code( net_inpt ) != "230":
             print("_not_consistent: Failed to login as guest. Aborting.")
@@ -130,13 +147,13 @@ class ProxyThread( threading.Thread ):
     def _get_files_list( self, server_sock ):
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.cmd_req = "epsv"
-        net_inpt = self.network.net_recv( server_sock )
+        net_inpt = self.network.net_recv( )
         self.network.cmd_req = ""
         if self.network.get_code( net_inpt ) != "229":
             print("_get_files_list_: failed with epsv. Aborting")
             exit()
         self.network.net_send(b"LIST\r\n", server_sock)
-        self.network.net_recv( server_sock )
+        self.network.net_recv( )
         fList = self.network.clean_data_buffers()
         self._read_226( server_sock )
         files_list_full = fList.decode().split("\n")[:-1]
@@ -152,10 +169,10 @@ class ProxyThread( threading.Thread ):
     def _get_file( self, filename, server_sock ):
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.cmd_req = "epsv"
-        self.network.net_recv( server_sock )
+        self.network.net_recv( )
         self.network.cmd_req = ""
         self.network.net_send(b"RETR " + filename.encode() + b"\r\n", server_sock)
-        self.network.net_recv( server_sock )
+        self.network.net_recv( )
         file_data = self.network.clean_data_buffers()
         self._read_226( server_sock )
         with open( "user_files/" + filename, "w" ) as f:
@@ -169,10 +186,10 @@ class ProxyThread( threading.Thread ):
         external = self._external_hosts()
         self.network.net_send( b"EPSV\r\n", external )
         self.network.cmd_req = "epsv"
-        self.network.net_recv( external )
+        self.network.net_recv( )
         self.network.cmd_req = ""
         self.network.net_send( b"RETR ServerHash.txt\r\n", external )
-        self.network.net_recv( external )
+        self.network.net_recv( )
         hashlist = self.network.get_hash_list()
         self._read_226( external )
         return hashlist
@@ -182,12 +199,12 @@ class ProxyThread( threading.Thread ):
 # Login to all servers on network as anonymous
     def _anon_login( self ):
         self.network.net_send(b"USER anonymous\r\n")
-        net_inpt = self.network.net_recv( self.network.servers )
+        net_inpt = self.network.net_recv( )
         if self.network.get_code( net_inpt ) != "331":
             print("Consistency check failure. anonymous user denied by server.")
             return
         self.network.net_send(b"PASS anonymous\r\n")
-        net_inpt = self.network.net_recv( self.network.servers )
+        net_inpt = self.network.net_recv( )
         if self.network.get_code( net_inpt ) != "230":
             print("Consistency check failure. anonymous user denied by server.")
             return
@@ -199,29 +216,15 @@ class ProxyThread( threading.Thread ):
 
 #  Clean all data buffers of the external servers and return the local server output
     def _LISTRETR( self ):
-        localhost = self._localhost()
-        
-        local_inpt = self.network.net_recv( localhost )
-        code = self.network.get_code( local_inpt )
-         
         self.network.close_data_connections()
-        return local_inpt
+        return ''
     
 
 
 # Wait for 226 from the local server. Then send the file to the rest of the network.
     def _STOR( self ):
-        localhost = self._localhost()
-        external = self._external_hosts()
-        
-        local_inpt = self.network.net_recv( localhost )
-        code = self.network.get_code( local_inpt )
-        if code == "226":
-            self.network.send_to_data_connection( self.filename )
-        else:
-            return b"421 local server did not recieve the file"
-        self._read_226( external )
-        return local_inpt
+        self.network.send_to_data_connection( self.filename )
+        return ''
    
 
 # Send raw data to client's control connection
@@ -229,7 +232,8 @@ class ProxyThread( threading.Thread ):
         try:
             self.client.send( raw_data )
         except( socket.gaierror, socket.timeout ):
-            print("The client has suddenly died")
+            if self.curr_cmd != "quit":
+                print("The client has suddenly died")
             exit()
 
 
@@ -250,24 +254,7 @@ class ProxyThread( threading.Thread ):
         return raw_inpt[:4].decode().strip().lower()
 
 
-# Return a list containing only the local FTP server socket
-    def _localhost( self ):
-        return [server for server in self.network.servers if server.getpeername()[0]=='127.0.0.1']
 
-
-
-# Return a list containing all but not the local FTP server sockets
-    def _external_hosts( self ):
-        return [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1']
-
-
-# Receive input from all external servers after a data command was completed, and check that they all sent 226 as the return code.
-    
-    def _read_226( self, servers ):
-        servers_respone = self.network.net_recv( servers )
-        codes = [ s for s in servers_respone.split() if s.isdigit() ]
-        if codes.count( b'226' ) != len( codes ):
-            print("Not all servers returned 226")
 
 
 
