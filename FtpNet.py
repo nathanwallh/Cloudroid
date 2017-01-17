@@ -12,9 +12,10 @@ class FtpNet:
     # Private variables declarations
         self.servers = list()
         self.data_sockets = list()
-        self.cmd_req = '' 
+        self.curr_cmd = '' 
         self.data_addresses = list()
         self.external = list()
+        self.local = list()
 
     # Connect to the addresses in netfile
         with open( netfile, 'r' ) as f:
@@ -22,28 +23,28 @@ class FtpNet:
         addresses = [ (address.split(':')[0],int(address.split(':')[1])) for address in raw_addr ]
         for comp in addresses:
             server_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-#            if comp[0] != '127.0.0.1':
-#                server_sock.settimeout(3)
-#            else:
-#                server_sock.settimeout(120)
             try:
                 server_sock.connect( comp )
                 self.servers.append( server_sock )
             except (socket.gaierror,socket.timeout,ConnectionRefusedError,OSError):
                 print("connection to " + str(comp) + " has failed")
         for server in self.servers:
-            code = self.get_code( self._get_raw_inpt( server ) )
+            code = self.get_code( self.get_raw_input( server ) )
             if not code:
                 continue
             if code != "220":
                 print("connection to FTP server at" + str( server.getpeername() ) + " has failed")
                 self.servers.remove( server )
-        self.external = [server for server in self.servers if server.getpeername()[0]!='127.0.0.1'];
+        self.external = [server for server in self.servers if server.getpeername()[0]!='127.0.0.1']
+        self.local = [server for server in self.servers if server.getpeername()[0]=='127.0.0.1']
         print("Completed connection to servers")
 
     def get_server_sock( self, serverIP ):
         return [ sock for sock in self.servers if sock.getpeername()[0]==serverIP ][0]
 
+
+    def local_recv( self ):
+        return self.get_raw_input( self.local[0] )
 
 # Read all hashes from the data sockets and return them as a list
     def get_hash_list( self ):
@@ -56,6 +57,7 @@ class FtpNet:
             except( socket.timeout ) as e:
                 print("connection broke down with " + data_s.getpeername()[0])
         self.data_sockets = []
+        self._read_226()
         return hashlist
 
 # Close all data connections
@@ -130,7 +132,7 @@ class FtpNet:
 
 # Return a list containing onlt the local FTP server socket
     def localhost( self ):
-        return [server for server in self.servers if server.getpeername()[0]=='127.0.0.1']
+        return
 
 
 # Return a list containing all but not the local FTP server sockets
@@ -140,11 +142,11 @@ class FtpNet:
 
 # Recieve data from all servers on the network, join it together and send back to proxy
     def net_recv( self ):
-        if self.cmd_req == "epsv":
+        if self.curr_cmd == "epsv":
             return self._net_recv_EPSV( )
         total = list()
         for server in self.external:
-            raw_inpt = self._get_raw_inpt( server )
+            raw_inpt = self.get_raw_input( server )
             total.append( raw_inpt )
         total = list( set( total ) )
         return b'\n'.join( total )
@@ -154,7 +156,7 @@ class FtpNet:
     def _net_recv_EPSV( self  ):
         data_addresses = []
         for server in self.external:
-            raw_inpt = self._get_raw_inpt( server )
+            raw_inpt = self.get_raw_input( server )
             code = self.get_code( raw_inpt )
             if code != "229":
                 print("Server: " + str( server.getpeername() ) +" failed with EPSV")
@@ -174,7 +176,7 @@ class FtpNet:
 
 
 # Recieve input from FTP server
-    def _get_raw_inpt( self, server ):
+    def get_raw_input( self, server ):
             while True:
                 try:
                     inpt = server.recv( 256 )
