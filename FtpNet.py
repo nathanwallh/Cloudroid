@@ -60,6 +60,7 @@ class FtpNet:
 
 # Read all buffers from data sockets and close them
     def clean_data_buffers( self ):
+        data = []
         for data_s in self.data_sockets:
             try:
                 data = data_s.recv(2048)
