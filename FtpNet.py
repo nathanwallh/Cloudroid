@@ -4,6 +4,7 @@
 # An object that represents the network of FTP servers.
 # It contains all methods for sending and recieveing FTP commands and data.
 
+BUF_SIZE = 2048
 DEBUG_val = True
 def DEBUG(s):
     if DEBUG_val == True:
@@ -22,7 +23,6 @@ class FtpNet:
         self.connect_to_network( netfile )
         self.external = [server for server in self.servers if server.getpeername()[0]!='127.0.0.1']
         self.local = [server for server in self.servers if server.getpeername()[0]=='127.0.0.1']
-        print("Completed connection to servers")
 
 
 # Connect to the addresses in netfile
@@ -46,19 +46,13 @@ class FtpNet:
                 self.servers.remove( server )
 
 
-# Read all hashes from the data sockets and return them as a list
-    def get_hash_list( self ):
-        hashlist = []
-        for data_s in self.data_sockets:
-            try:
-                s_hash = data_s.recv( 128 ).decode()
-                hashlist.append( (data_s.getpeername()[0], s_hash) )
-                data_s.close()
-            except( socket.timeout ) as e:
-                print("connection broke down with " + data_s.getpeername()[0])
-        self.data_sockets = []
-        self.read_226()
-        return hashlist
+# Read all hashes from the data sockets and return them as a list with ports
+    def retrieve_hash_tuples( self ):
+        hash_tuples = []
+        addresses = [address[0] for address in self.data_sockets]
+        hashes = self.read_data_buffers( self.external )
+        hash_tuples = zip( addresses, hashes )
+        return hash_tuples
 
 
 # Close all data connections
@@ -69,19 +63,25 @@ class FtpNet:
 
 
 # Read all buffers from data sockets and close them
-    def clean_data_buffers( self ):
+    def read_data_buffers( self, Servers=None ):
         data = []
-        for data_s in self.data_sockets:
+        if Servers == None:
+            d_sockets = self.data_sockets
+        else:
+            d_sockets = [d_socket for d_socket in self.data_sockets if \
+                d_socket[0] in [ s[0] for s in Servers ] ]
+        for data_s in d_sockets:
             try:
-                data = data_s.recv(2048)
+                data.append( data_s.recv(BUF_SIZE) )
+                self.data_sockets.remove(data_s)
                 data_s.close()
-            except(socket.timeout) as e:
+            except Exception as e:
                 print("connection broke down with " + data_s.getpeername()[0])
-        self.data_sockets = []
+        self.read_226( Servers )
         return data
 
 
-# Send the file specified in <filename> to all servers on the network except localhost
+# Send the a file to the external network
     def send_to_data_connection( self, filename ):
         for data_s in self.data_sockets:
             with open( filename, "r" ) as f:
@@ -90,39 +90,37 @@ class FtpNet:
                     data_s.close()
                 except:
                     print("Problem in sending data")
-                    exit()
         self.data_sockets = []
-        self.read_226()
+        self.read_226( self.external )
 
 
-# Receive input from all external servers after a data command was completed, and check that they all sent 226 as the return code.
-    
-    def read_226( self ):
-        servers_respone = self.net_recv( )
+# Receive input from all external servers after a data command was completed, and check that they all sent 226 as the return code.    
+    def read_226( self, Servers ):
+        servers_respone = self.net_recv( Servers )
         codes = [ s for s in servers_respone.split() if s.isdigit() ]
         if codes.count( b'226' ) != len( codes ):
             print("Not all servers returned 226")
 
 
+
 # Make data connection with all addresses in self.data_addresses
     def make_data_connections( self, data_addresses):
-        for comp in data_addresses:
+        for addr in data_addresses:
             data_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
             try:
-                data_sock.connect( comp )
+                data_sock.connect( addr )
                 self.data_sockets.append( data_sock )
-            except (socket.gaierror,socket.timeout,ConnectionRefusedError) as e:
+            except Exception as e:
                 print("Data connection to " + str( comp ) + " has failed." )
-                exit()
 
 
 
 # Send buf to all servers in the network
-    def net_send( self, buf, servers=None ):
-        if servers==None:
-            servers = self.servers
+    def net_send( self, buf, Servers=None ):
+        if Servers==None:
+            Servers = self.servers
 
-        for server in servers:
+        for server in Servers:
             try:
                 server.send( buf )
             except( socket.gaierror, socket.timeout ):
@@ -131,12 +129,14 @@ class FtpNet:
 
 
 
-# Recieve data from all servers on the network, join it together and send back to proxy
-    def net_recv( self ):
+# Recieve data from list of servers.
+    def net_recv( self, Servers=None ):
+        if Servers == None:
+            Server = self.external
         if self.curr_cmd == "epsv":
-            return self.net_recv_EPSV( )
+            return self.net_recv_EPSV( Servers )
         total = list()
-        for server in self.external:
+        for server in Servers:
             raw_inpt = self.get_raw_input( server )
             total.append( raw_inpt )
         total = list( set( total ) )
@@ -144,19 +144,25 @@ class FtpNet:
 
 
 # Save all ports for data connection and send back only the localhost port 
-    def net_recv_EPSV( self  ):
+    def net_recv_EPSV( self, Servers=None  ):
+        if Servers == None:
+            Servers = self.external
         data_addresses = []
-        for server in self.external:
+        total = list()
+        for server in Servers:
             raw_inpt = self.get_raw_input( server )
+            total.append( raw_inpt )
             code = self.get_code( raw_inpt )
             if code != "229":
                 print("Server: " + str( server.getpeername() ) +" failed with EPSV")
+                total = total[:-1]
             else:
                 port = int( raw_inpt.decode()[3:].split("|")[-2] )
                 data_addresses.append( (server.getpeername()[0], port) )
     # There are 2 cases corresponding to whether EPSV was sent as a part of consistency check or not.
         self.make_data_connections( data_addresses )
-        return ''
+        total = list( set( total ) )
+        return b'\n'.join( total )
 
 
 

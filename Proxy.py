@@ -40,6 +40,7 @@ class ProxyThread( threading.Thread ):
 #        self.consistency_check()
         self.repeater = threading.Thread( target=self.localhost_repeater )
         self.repeater.daemon = True
+        print("Completed connection to servers")
 
 
 # Serve the client
@@ -83,7 +84,7 @@ class ProxyThread( threading.Thread ):
                 self.EPSV = False
         
         # Get input from network
-            self.network.net_recv( )
+            self.network.net_recv( self.network.external )
         
 
 # A thread that recieves data from the local FTP and sends it to the user
@@ -120,45 +121,45 @@ class ProxyThread( threading.Thread ):
         rmtree("user_files")
         mkdir("user_files")
         self.network.net_send(b"USER guest\r\n", server_sock)
-        self.network.net_recv( )
+        self.network.net_recv( server_sock )
         self.network.net_send(b"PASS guest\r\n", server_sock)
-        net_inpt = self.network.net_recv( )
-        if self.network.get_code( net_inpt ) != "230":
+        inpt = self.network.net_recv( server_sock )
+        if self.network.get_code( inpt ) != "230":
             print("_not_consistent: Failed to login as guest. Aborting.")
             exit()
-        files = self.get_files_list( server_sock )
+        files = self.get_file_list( server_sock )
         for f in files:
-            self.get_file( f, server_sock )
+            self.retrieve_file( f, server_sock )
+        self.anon_login( server_sock )
+
 
 
 # Get the files list of a single server
-    def get_files_list( self, server_sock ):
+    def get_file_list( self, server_sock ):
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.curr_cmd = "epsv"
-        net_inpt = self.network.net_recv( )
+        net_inpt = self.network.net_recv( server_sock )
         self.network.curr_cmd = ""
         self.network.net_send(b"LIST\r\n", server_sock)
-        self.network.net_recv( )
-        fList = self.network.clean_data_buffers()
-        self.read_226( server_sock )
-        files_list_full = fList.decode().split("\n")[:-1]
-        files_list_clean = list()
-        for f in files_list_full:
-            files_list_clean.append( f.split()[-1] )
-        return files_list_clean
+        self.network.net_recv( server_sock )
+        file_List = self.network.read_data_buffers()
+        raw_file_list = file_List.decode().split("\n")[:-1]
+        clean_file_list = list()
+        for f in raw_file_list:
+            clean_file_list.append( f.split()[-1] )
+        return clean_file_list
 
 
 
 # Retrieve a file from a single server
-    def get_file( self, filename, server_sock ):
+    def retrieve__file( self, filename, server_sock ):
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.curr_cmd = "epsv"
-        self.network.net_recv( )
+        self.network.net_recv( server_sock  )
         self.network.curr_cmd = ""
         self.network.net_send(b"RETR " + filename.encode() + b"\r\n", server_sock)
-        self.network.net_recv( )
-        file_data = self.network.clean_data_buffers()
-        self.read_226( server_sock )
+        self.network.net_recv( server_sock )
+        file_data = self.network.read_data_buffers( server_sock )
         with open( "user_files/" + filename, "w" ) as f:
             f.write( file_data.decode() )
     
@@ -169,35 +170,36 @@ class ProxyThread( threading.Thread ):
         self.anon_login()
         self.network.net_send( b"EPSV\r\n", self.network.external )
         self.network.curr_cmd = "epsv"
-        self.network.net_recv( )
+        self.network.net_recv( self.network.external )
         self.network.curr_cmd = ""
         self.network.net_send( b"RETR ServerHash.txt\r\n", self.network.external )
-        self.network.net_recv( )
-        hashlist = self.network.get_hash_list()
+        self.network.net_recv( self.network.external )
+        hashlist = self.network.retrieve_hash_tuples()
         return hashlist
 
 
 
+
 # Login to all servers on network as anonymous
-    def anon_login( self ):
-        self.network.net_send(b"USER anonymous\r\n", self.network.external)
-        self.network.net_recv( )
-        self.network.net_send(b"PASS anonymous\r\n", self.network.external)
-        self.network.net_recv( )
+    def anon_login( self, Servers=None ):
+        if Servers == None:
+            Servers = self.network.external
+        self.network.net_send(b"USER anonymous\r\n", Servers)
+        self.network.net_recv( Servers )
+        self.network.net_send(b"PASS anonymous\r\n", Servers)
+        self.network.net_recv( Servers )
         return
 
 
 
 
 
-#  Clean all data buffers of the external servers and return the local server output
     def LISTRETR( self ):
         self.network.close_data_connections()
         return ''
     
 
 
-# Wait for 226 from the local server. Then send the file to the rest of the network.
     def STOR( self ):
         self.network.send_to_data_connection( self.filename )
         return ''
