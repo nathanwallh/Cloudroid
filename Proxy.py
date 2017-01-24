@@ -8,6 +8,9 @@
 # connection through port 6000 and then things run as usual.
 USERS_FILE = "Uinfo.txt"
 CONSISTENCY_THRESHOLD = 0.7
+NETWORK_FILE = "Netinfo.txt"
+BUF_SIZE = 2048
+PORT = 6000
 
 DEBUG_val = False
 def DEBUG(s):
@@ -32,7 +35,7 @@ class ProxyThread( threading.Thread ):
         self.filename = ''
         self.EPSV = False
         self.client = client
-        self.network = FtpNet.FtpNet('Netinfo.txt')
+        self.network = FtpNet.FtpNet(NETWORK_FILE)
         self.hash = Hasher.Hasher()
         self.consistency_check()
         self.repeater = threading.Thread( target=self.localhost_repeater )
@@ -216,7 +219,7 @@ class ProxyThread( threading.Thread ):
 # Recieve raw data from the client's control connection
     def get_raw_inpt( self ):
         try:
-            inpt = self.client.recv( 256 )
+            inpt = self.client.recv( BUF_SIZE )
         except (socket.timeout) as e:
             print("Client is dead")
             inpt = ''
@@ -243,5 +246,5 @@ class ProxyServer:
             
                     
 if __name__ == '__main__':
-    Proxy = ProxyServer(6000)
+    Proxy = ProxyServer(PORT)
     Proxy.serve()
