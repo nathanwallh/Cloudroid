@@ -6,7 +6,7 @@ import subprocess
 import sys
 import atexit
 import os
-from signal import SIGTERM
+import platform
 
 def clean_exit():
     if FTPs.poll() == None:
@@ -22,6 +22,6 @@ if __name__ == '__main__':
     Proxy = subprocess.Popen(["./Proxy.py"],stdout=sys.stdout)
     atexit.register(clean_exit)
     
-    if 'Odroid' in platform.platform():
+    if 'aarch64' == platform.machine():
         subprocess.call(["./LED.sh"],shell=True)
     os.wait()

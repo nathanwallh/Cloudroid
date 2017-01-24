@@ -12,7 +12,7 @@ NETWORK_FILE = "Netinfo.txt"
 BUF_SIZE = 2048
 PORT = 6000
 
-DEBUG_val = False
+DEBUG_val = True
 def DEBUG(s):
     if DEBUG_val == True:
         print(s)
@@ -37,7 +37,7 @@ class ProxyThread( threading.Thread ):
         self.client = client
         self.network = FtpNet.FtpNet(NETWORK_FILE)
         self.hash = Hasher.Hasher()
-        self.consistency_check()
+#        self.consistency_check()
         self.repeater = threading.Thread( target=self.localhost_repeater )
         self.repeater.daemon = True
 
@@ -71,7 +71,7 @@ class ProxyThread( threading.Thread ):
             elif self.curr_cmd == "epsv":
                 self.EPSV = True;
             elif self.curr_cmd == "stor":
-                self.filename = self.user + "/" + cli_inpt[5:].decode().strip()
+                self.filename = "user_files/" + cli_inpt[5:].decode().strip()
                 if self.EPSV == True:
                     self.STOR()
             elif self.curr_cmd == "list" or self.curr_cmd == "retr":
@@ -137,9 +137,6 @@ class ProxyThread( threading.Thread ):
         self.network.curr_cmd = "epsv"
         net_inpt = self.network.net_recv( )
         self.network.curr_cmd = ""
-        if self.network.get_code( net_inpt ) != "229":
-            print("_get_files_list_: failed with epsv. Aborting")
-            exit()
         self.network.net_send(b"LIST\r\n", server_sock)
         self.network.net_recv( )
         fList = self.network.clean_data_buffers()
