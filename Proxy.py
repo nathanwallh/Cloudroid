@@ -34,7 +34,7 @@ class ProxyThread( threading.Thread ):
         self.client = client
         self.network = FtpNet.FtpNet('Netinfo.txt')
         self.hash = Hasher.Hasher()
-        self._consistency_check()
+        self.consistency_check()
         self.repeater = threading.Thread( target=self.localhost_repeater )
         self.repeater.daemon = True
 
@@ -46,7 +46,7 @@ class ProxyThread( threading.Thread ):
         
         while True:
         # Get input from the client
-            cli_inpt = self._get_raw_inpt()
+            cli_inpt = self.get_raw_inpt()
             print( "Client says: ", cli_inpt.decode() ) 
             if not cli_inpt:
                 break
@@ -70,10 +70,10 @@ class ProxyThread( threading.Thread ):
             elif self.curr_cmd == "stor":
                 self.filename = self.user + "/" + cli_inpt[5:].decode().strip()
                 if self.EPSV == True:
-                    self._STOR()
+                    self.STOR()
             elif self.curr_cmd == "list" or self.curr_cmd == "retr":
                 if self.EPSV == True:
-                    self._LISTRETR()
+                    self.LISTRETR()
             
             if self.EPSV == True and \
                 (self.curr_cmd == "stor" or self.curr_cmd == "list" or self.curr_cmd =="retr"):
@@ -92,7 +92,7 @@ class ProxyThread( threading.Thread ):
 
 
 # Check consistency of server with others on network
-    def _consistency_check( self ):
+    def consistency_check( self ):
         threshold = round( self.network.size() * CONSISTENCY_THRESHOLD )
         network_hashes = self.get_hashes()
         for server_hash in network_hashes:
@@ -107,13 +107,13 @@ class ProxyThread( threading.Thread ):
             occurrences = len( [h[1] for h in network_hashes if h[1] == hsh[1]] )
             occurrences_list.append(  ( hsh[0], occurrences) )
         max_occur = max( occurrences_list, key=lambda tup: tup[1] )
-        self._not_consistent( [ self.network.get_server_sock( max_occur[0] ) ] )
+        self.not_consistent( [ self.network.get_server_sock( max_occur[0] ) ] )
         return
     
 
 
 # Update all server files from a single server
-    def _not_consistent( self, server_sock ):
+    def not_consistent( self, server_sock ):
         rmtree("user_files")
         mkdir("user_files")
         self.network.net_send(b"USER guest\r\n", server_sock)
@@ -123,13 +123,13 @@ class ProxyThread( threading.Thread ):
         if self.network.get_code( net_inpt ) != "230":
             print("_not_consistent: Failed to login as guest. Aborting.")
             exit()
-        files = self._get_files_list( server_sock )
+        files = self.get_files_list( server_sock )
         for f in files:
-            self._get_file( f, server_sock )
+            self.get_file( f, server_sock )
 
 
 # Get the files list of a single server
-    def _get_files_list( self, server_sock ):
+    def get_files_list( self, server_sock ):
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.curr_cmd = "epsv"
         net_inpt = self.network.net_recv( )
@@ -140,7 +140,7 @@ class ProxyThread( threading.Thread ):
         self.network.net_send(b"LIST\r\n", server_sock)
         self.network.net_recv( )
         fList = self.network.clean_data_buffers()
-        self._read_226( server_sock )
+        self.read_226( server_sock )
         files_list_full = fList.decode().split("\n")[:-1]
         files_list_clean = list()
         for f in files_list_full:
@@ -150,7 +150,7 @@ class ProxyThread( threading.Thread ):
 
 
 # Retrieve a file from a single server
-    def _get_file( self, filename, server_sock ):
+    def get_file( self, filename, server_sock ):
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.curr_cmd = "epsv"
         self.network.net_recv( )
@@ -158,7 +158,7 @@ class ProxyThread( threading.Thread ):
         self.network.net_send(b"RETR " + filename.encode() + b"\r\n", server_sock)
         self.network.net_recv( )
         file_data = self.network.clean_data_buffers()
-        self._read_226( server_sock )
+        self.read_226( server_sock )
         with open( "user_files/" + filename, "w" ) as f:
             f.write( file_data.decode() )
     
@@ -166,7 +166,7 @@ class ProxyThread( threading.Thread ):
 
 # Get all server hashes on the EXTERNAL network
     def get_hashes( self ):
-        self._anon_login()
+        self.anon_login()
         self.network.net_send( b"EPSV\r\n", self.network.external )
         self.network.curr_cmd = "epsv"
         self.network.net_recv( )
@@ -179,7 +179,7 @@ class ProxyThread( threading.Thread ):
 
 
 # Login to all servers on network as anonymous
-    def _anon_login( self ):
+    def anon_login( self ):
         self.network.net_send(b"USER anonymous\r\n", self.network.external)
         self.network.net_recv( )
         self.network.net_send(b"PASS anonymous\r\n", self.network.external)
@@ -191,14 +191,14 @@ class ProxyThread( threading.Thread ):
 
 
 #  Clean all data buffers of the external servers and return the local server output
-    def _LISTRETR( self ):
+    def LISTRETR( self ):
         self.network.close_data_connections()
         return ''
     
 
 
 # Wait for 226 from the local server. Then send the file to the rest of the network.
-    def _STOR( self ):
+    def STOR( self ):
         self.network.send_to_data_connection( self.filename )
         return ''
    
@@ -214,7 +214,7 @@ class ProxyThread( threading.Thread ):
 
 
 # Recieve raw data from the client's control connection
-    def _get_raw_inpt( self ):
+    def get_raw_inpt( self ):
         try:
             inpt = self.client.recv( 256 )
         except (socket.timeout) as e:
