@@ -201,7 +201,7 @@ class ProxyThread( threading.Thread ):
 
 
     def STOR( self ):
-        self.network.send_to_data_connection( self.filename )
+        self.network.send_file( self.filename )
         return ''
    
 

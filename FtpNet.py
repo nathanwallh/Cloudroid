@@ -82,7 +82,7 @@ class FtpNet:
 
 
 # Send the a file to the external network
-    def send_to_data_connection( self, filename ):
+    def send_file( self, filename ):
         for data_s in self.data_sockets:
             with open( filename, "r" ) as f:
                 try:
