@@ -37,7 +37,7 @@ class ProxyThread( threading.Thread ):
         self.client = client
         self.network = FtpNet.FtpNet(NETWORK_FILE)
         self.hash = Hasher.Hasher()
-#        self.consistency_check()
+        self.consistency_check()
         self.repeater = threading.Thread( target=self.localhost_repeater )
         self.repeater.daemon = True
         print("Completed connection to servers")
