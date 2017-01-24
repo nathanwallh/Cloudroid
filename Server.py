@@ -5,7 +5,7 @@
 import subprocess
 import sys
 import atexit
-from os import wait,devnull
+import os
 from signal import SIGTERM
 
 def clean_exit():
@@ -15,10 +15,13 @@ def clean_exit():
         Proxy.terminate()
 
 
-# forking the FTPserver
-with open(devnull,"w") as FNULL:
-    FTPs = subprocess.Popen(["./FTPserver.py"],stdout=FNULL,stderr=subprocess.STDOUT)
-Proxy = subprocess.Popen(["./Proxy.py"],stdout=sys.stdout)
 
-atexit.register(clean_exit)
-wait()
+if __name__ == '__main__':
+    with open(os.devnull,"w") as FNULL:
+        FTPs = subprocess.Popen(["./FTPserver.py"],stdout=FNULL,stderr=subprocess.STDOUT)
+    Proxy = subprocess.Popen(["./Proxy.py"],stdout=sys.stdout)
+    atexit.register(clean_exit)
+    
+    if 'Odroid' in platform.platform():
+        subprocess.call(["./LED.sh"],shell=True)
+    os.wait()
