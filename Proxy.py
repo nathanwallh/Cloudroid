@@ -112,7 +112,7 @@ class ProxyThread( threading.Thread ):
     
 
 
-# Update all server files
+# Update all server files from a single server
     def _not_consistent( self, server_sock ):
         rmtree("user_files")
         mkdir("user_files")
@@ -128,7 +128,7 @@ class ProxyThread( threading.Thread ):
             self._get_file( f, server_sock )
 
 
-
+# Get the files list of a single server
     def _get_files_list( self, server_sock ):
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.curr_cmd = "epsv"
@@ -149,7 +149,7 @@ class ProxyThread( threading.Thread ):
 
 
 
-
+# Retrieve a file from a single server
     def _get_file( self, filename, server_sock ):
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.curr_cmd = "epsv"
