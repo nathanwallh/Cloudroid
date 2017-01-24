@@ -1,29 +1,24 @@
 #!/usr/bin/python3
 
-from pyftpdlib.authorizers import DummyAuthorizer
-from pyftpdlib.handlers import FTPHandler
-from pyftpdlib.servers import FTPServer
-from os import mkdir
-from os import path
-from os import getcwd
-from UinfoFunc import get_all_usernames_from_file
+# The FTPNetwork server as a whole. Proxy + FTPserver together.
+
+import subprocess
+import sys
+import atexit
+from os import wait,devnull
+from signal import SIGTERM
+
+def clean_exit():
+    if FTPs.poll() == None:
+        FTPs.terminate()
+    if Proxy.poll() == None:
+        Proxy.terminate()
 
 
-FTPPORT = 8000
+# forking the FTPserver
+with open(devnull,"w") as FNULL:
+    FTPs = subprocess.Popen(["./FTPserver.py"],stdout=FNULL,stderr=subprocess.STDOUT)
+Proxy = subprocess.Popen(["./Proxy.py"],stdout=sys.stdout)
 
-
-# Add users from Uinfo.txt and create directories for them.
-auth = DummyAuthorizer()
-if path.exists("user_files") is False:
-    mkdir("user_files")
-auth.add_user("guest", "guest", './user_files', perm='elradfmw')
-auth.add_anonymous( getcwd() + '/Hash' )
-
-handler = FTPHandler
-handler.authorizer = auth
-
-server = FTPServer(('', FTPPORT), handler)
-server.max_cons = 10
-server.max_cons_per_ip = 10
-
-server.serve_forever()
+atexit.register(clean_exit)
+wait()
