@@ -18,8 +18,14 @@ class FtpNet:
         self.data_addresses = list()
         self.external = list()
         self.local = list()
+        self.connect_to_network( netfile )
+        self.external = [server for server in self.servers if server.getpeername()[0]!='127.0.0.1']
+        self.local = [server for server in self.servers if server.getpeername()[0]=='127.0.0.1']
+        print("Completed connection to servers")
 
-    # Connect to the addresses in netfile
+
+# Connect to the addresses in netfile
+    def connect_to_network( self, netfile ):
         with open( netfile, 'r' ) as f:
             raw_addr = f.read().split()
         addresses = [ (address.split(':')[0],int(address.split(':')[1])) for address in raw_addr ]
@@ -37,16 +43,6 @@ class FtpNet:
             if code != "220":
                 print("connection to FTP server at" + str( server.getpeername() ) + " has failed")
                 self.servers.remove( server )
-        self.external = [server for server in self.servers if server.getpeername()[0]!='127.0.0.1']
-        self.local = [server for server in self.servers if server.getpeername()[0]=='127.0.0.1']
-        print("Completed connection to servers")
-
-    def get_server_sock( self, serverIP ):
-        return [ sock for sock in self.servers if sock.getpeername()[0]==serverIP ][0]
-
-
-    def local_recv( self ):
-        return self.get_raw_input( self.local[0] )
 
 # Read all hashes from the data sockets and return them as a list
     def get_hash_list( self ):
@@ -62,11 +58,13 @@ class FtpNet:
         self._read_226()
         return hashlist
 
+
 # Close all data connections
     def close_data_connections( self ):
         for data_s in self.data_sockets:
             data_s.close()
         self.data_sockets = []
+
 
 # Read all buffers from data sockets and close them
     def clean_data_buffers( self ):
@@ -131,16 +129,6 @@ class FtpNet:
 
 
 
-# Return a list containing onlt the local FTP server socket
-    def localhost( self ):
-        return
-
-
-# Return a list containing all but not the local FTP server sockets
-    def external_hosts( self ):
-        return [server for server in self.network.servers if server.getpeername()[0]!='127.0.0.1'];
-
-
 # Recieve data from all servers on the network, join it together and send back to proxy
     def net_recv( self ):
         if self.curr_cmd == "epsv":
@@ -168,6 +156,9 @@ class FtpNet:
         self._make_data_connections( data_addresses )
         return ''
 
+
+
+
 # Extract the code from the FTP servers response
     def get_code( self, raw_inpt ):
         if not raw_inpt:
@@ -192,9 +183,16 @@ class FtpNet:
             return inpt
     
 
+
 # Return number of active servers
     def size( self ):
         return len( self.servers )
 
 
 
+    def get_server_sock( self, serverIP ):
+            return [ sock for sock in self.servers if sock.getpeername()[0]==serverIP ][0]
+
+
+    def local_recv( self ):
+            return self.get_raw_input( self.local[0] )
