@@ -9,7 +9,7 @@
 USERS_FILE = "Uinfo.txt"
 CONSISTENCY_THRESHOLD = 0.7
 NETWORK_FILE = "Netinfo.txt"
-USER_DIR = "user_files/"
+USER_DIR = "user_files"
 BUF_SIZE = 2048
 PORT = 6000
 HASH_FILE = b"ServerHash.txt"
@@ -62,6 +62,7 @@ class ProxyThread( threading.Thread ):
             if (self.curr_cmd == "stor" or self.curr_cmd == "list" or self.curr_cmd == "retr") \
                 and self.EPSV == False:
                 self.send_client(b"503 Can't do it before you send EPSV.\r\n")
+                print("Network says: 503 Can't do it before you send EPSV.\r\n")
                 continue
 
         # Send the client's input to the network
@@ -81,7 +82,7 @@ class ProxyThread( threading.Thread ):
                 net_inpt = self.network.net_recv( self.network.external )
                 self.network.get_code( local_inpt )
             elif self.curr_cmd == "stor":
-                filename = USER_DIR + cli_inpt[5:].decode().strip()
+                filename = USER_DIR + "/" +cli_inpt[5:].decode().strip()
                 local_inpt = self.network.local_recv()
                 self.network.send_file( filename )
                 net_inpt = self.network.net_recv( self.network.external )
@@ -115,8 +116,8 @@ class ProxyThread( threading.Thread ):
 
 # Update all server files from a single server
     def not_consistent( self, server_sock ):
-        rmtree("user_files")
-        mkdir("user_files")
+        rmtree(USER_DIR)
+        mkdir(USER_DIR)
         self.network.net_send(b"USER guest\r\n", server_sock)
         self.network.net_recv( server_sock )
         self.network.net_send(b"PASS guest\r\n", server_sock)
@@ -137,6 +138,7 @@ class ProxyThread( threading.Thread ):
         self.network.net_send(b"LIST\r\n", server_sock)
         self.network.net_recv( server_sock )
         file_list = self.network.read_data_buffers( server_sock )[0]
+        self.network.net_recv( server_sock )
         raw_file_list = file_list.decode().split("\n")[:-1]
         clean_file_list = list()
         for f in raw_file_list:
@@ -154,7 +156,8 @@ class ProxyThread( threading.Thread ):
         self.network.net_send(b"RETR " + filename.encode() + b"\r\n", server_sock)
         self.network.net_recv( server_sock )
         file_data = self.network.read_data_buffers( server_sock )[0]
-        with open( "user_files/" + filename, "w" ) as f:
+        self.network.net_recv( server_sock )
+        with open( USER_DIR + "/" + filename, "w" ) as f:
             f.write( file_data.decode() )
     
 
@@ -169,6 +172,7 @@ class ProxyThread( threading.Thread ):
         self.network.net_send( b"RETR " + HASH_FILE +b"\r\n", self.network.external )
         self.network.net_recv( self.network.external )
         hashlist = self.network.retrieve_hash_tuples()
+        self.network.net_recv( self.network.external )
         return hashlist
 
 
