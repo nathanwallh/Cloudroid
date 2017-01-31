@@ -12,6 +12,7 @@ NETWORK_FILE = "Netinfo.txt"
 USER_DIR = "user_files/"
 BUF_SIZE = 2048
 PORT = 6000
+HASH_FILE = b"ServerHash.txt"
 
 DEBUG_val = True
 def DEBUG(s):
@@ -37,7 +38,9 @@ class ProxyThread( threading.Thread ):
         self.client = client
         self.network = FtpNet.FtpNet(NETWORK_FILE)
         self.hash = Hasher.Hasher()
-#        self.consistency_check()
+        self.network.cons_check = True
+        self.consistency_check()
+        self.network.cons_check = False
         print("Completed connection to servers")
 
 
@@ -117,10 +120,7 @@ class ProxyThread( threading.Thread ):
         self.network.net_send(b"USER guest\r\n", server_sock)
         self.network.net_recv( server_sock )
         self.network.net_send(b"PASS guest\r\n", server_sock)
-        inpt = self.network.net_recv( server_sock )
-        if self.network.get_code( inpt ) != "230":
-            print("_not_consistent: Failed to login as guest. Aborting.")
-            exit()
+        self.network.net_recv( server_sock )
         files = self.get_file_list( server_sock )
         for f in files:
             self.retrieve_file( f, server_sock )
@@ -132,7 +132,7 @@ class ProxyThread( threading.Thread ):
     def get_file_list( self, server_sock ):
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.curr_cmd = "epsv"
-        net_inpt = self.network.net_recv( server_sock )
+        self.network.net_recv( server_sock )
         self.network.curr_cmd = ""
         self.network.net_send(b"LIST\r\n", server_sock)
         self.network.net_recv( server_sock )
@@ -166,7 +166,7 @@ class ProxyThread( threading.Thread ):
         self.network.curr_cmd = "epsv"
         self.network.net_recv( self.network.external )
         self.network.curr_cmd = ""
-        self.network.net_send( b"RETR ServerHash.txt\r\n", self.network.external )
+        self.network.net_send( b"RETR " + HASH_FILE +b"\r\n", self.network.external )
         self.network.net_recv( self.network.external )
         hashlist = self.network.retrieve_hash_tuples()
         return hashlist
@@ -175,7 +175,7 @@ class ProxyThread( threading.Thread ):
 
 
 # Login to all servers on network as anonymous
-    def anon_login( self, Servers=None ):
+    def anon_login( self, Servers=None  ):
         if Servers == None:
             Servers = self.network.external
         self.network.net_send(b"USER anonymous\r\n", Servers)

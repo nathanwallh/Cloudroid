@@ -17,6 +17,7 @@ class FtpNet:
         self.servers = list()
         self.data_sockets = list()
         self.curr_cmd = '' 
+        self.cons_check = False
         self.data_addresses = list()
         self.external = list()
         self.local = list()
@@ -136,7 +137,10 @@ class FtpNet:
             Servers = self.servers
         if self.curr_cmd == "epsv":
             self.net_recv_EPSV( self.external )
-            return self.local_recv() 
+            if self.cons_check == True:
+                return ''
+            else:
+                return self.local_recv()
         total = list()
         for server in Servers:
             raw_inpt = self.get_raw_input( server )
