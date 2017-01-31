@@ -36,6 +36,7 @@ class Hasher:
         self.__sha_size = 256
         self.__hasher_filename = "Hash/ServerHash.txt"
         self.__server_hash = '0' * (self.__sha_size >> 2)
+        self.export_hash_server_to_file()
         self.check_if_server_updated()
 
         self.automatic_update_hash_server()
@@ -100,3 +101,4 @@ class Hasher:
     def automatic_update_hash_server(self):
         self.check_if_server_updated()
         threading.Timer(UPDATE_TIMER, self.automatic_update_hash_server).start()
+sh = Hasher()
