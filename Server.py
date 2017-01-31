@@ -22,6 +22,6 @@ if __name__ == '__main__':
     Proxy = subprocess.Popen(["./Proxy.py"],stdout=sys.stdout)
     atexit.register(clean_exit)
     
-    if 'aarch64' == platform.machine():
-        subprocess.call(["./LED.sh"],shell=True)
+#    if 'aarch64' == platform.machine():
+#        subprocess.call(["./LED.sh"],shell=True)
     os.wait()
