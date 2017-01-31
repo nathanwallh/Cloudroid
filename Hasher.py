@@ -21,7 +21,6 @@ xor = lambda x, y: \
 binary_2_hex = lambda bit_list: \
         hex(int('1' + bit_list, 2))[3:]
 
-
 def exception_handling(error_str):
     print(YELLOW_COLOR)
     print("Error using '{0}' function: {1}".format(error_str.split(':')[0], error_str.split(':')[1]))
@@ -29,21 +28,6 @@ def exception_handling(error_str):
     fname = split(exc_tb.tb_frame.f_code.co_filename)[1]
     print(exc_type, fname, exc_tb.tb_lineno)
     print(WHITE_COLOR)
-
-
-def save_file(filename, folder_path):
-    print("Please write the data file")
-    file_input = input()
-    data = ""
-    while file_input:
-        data += file_input + "\r\n"
-        file_input = input()
-    try:
-        file = open(join(folder_path, filename), 'w')
-        [file.write(line) for line in data]
-    except Exception as e:
-        exception_handling(str(e))
-        return None
 
 
 class Hasher:
@@ -56,20 +40,10 @@ class Hasher:
 
         self.automatic_update_hash_server()
 
-    def read_hash_server_file(self):
-        self.__server_hash = '0' * (self.__sha_size >> 2)
-        if isfile(self.__hasher_filename):
-            self.__server_hash = [str(data) for data in open(self.__hasher_filename, 'r', encoding="utf-8")][0]
-            if self.__server_hash.__len__() != (self.__sha_size >> 2):
-                self.__server_hash = '0' * (self.__sha_size >> 2)
-
-        return self.__server_hash
-
     def export_hash_server_to_file(self):
         try:
             with open(self.__hasher_filename, "w") as file:
                 file.write(self.__server_hash)
-
         except Exception as e:
             exception_handling(str(e))
 
@@ -118,93 +92,7 @@ class Hasher:
         self.export_hash_server_to_file()
         return False
 
-    def isEqual(self, server_hash):
-        return self.__server_hash == server_hash
 
-    def make_sha256_for_folder(self, folder_path):
-        self.hasher = sha256()
-        folder_hash = '0' * (self.__sha_size >> 2)
-
-        try:
-            dir_path = listdir(folder_path)
-            if not dir_path:
-                raise NotADirectoryError
-
-            for filename in dir_path:
-                sha256_hash = self.open_file(filename, folder_path, "rb")
-                if sha256_hash is None:
-                    return None
-                folder_hash = binary_2_hex(xor(folder_hash, sha256_hash))
-
-        except Exception as e:
-            exception_handling(str(e))
-            return None
-
-        return self.hasher.hexdigest()
-
-    def update_file(self, folder_path, filename):
-        try:
-            if not isfile(join(folder_path, filename)):
-                raise FileNotFoundError
-
-            sha256_hash = self.open_file(filename, folder_path, "rb")
-            if sha256_hash is None:
-                return None
-
-            self.__server_hash = binary_2_hex(xor(self.__server_hash, sha256_hash))
-            save_file(filename, folder_path)
-            if sha256_hash is None:
-                return None
-            sha256_hash = self.open_file(filename, folder_path, "rb")
-            if sha256_hash is None:
-                return None
-            self.__server_hash = binary_2_hex(xor(self.__server_hash, sha256_hash))
-
-        except Exception as e:
-            exception_handling(str(e))
-            return None
-
-        return True
-
-    def delete_file(self, folder_path, filename):
-        try:
-            filename_path = join(folder_path, filename)
-            if not isfile(filename_path):
-                raise FileNotFoundError
-        except FileNotFoundError as e:
-            print(YELLOW_COLOR, "The file doesn't exist!!", WHITE_COLOR)
-            return None
-
-        try:
-            sha256_hash = self.open_file(filename, folder_path, "rb")
-            if sha256_hash is None:
-                return None
-
-            self.__server_hash = binary_2_hex(xor(self.__server_hash, sha256_hash))
-            remove(filename_path)
-
-        except Exception as e:
-            exception_handling(str(e))
-            return None
-
-        return True
-
-    def create_file(self, folder_path, filename):
-        try:
-            if isfile(join(folder_path, filename)):
-                raise FileExistsError
-
-            save_file(filename, folder_path)
-            sha256_hash = self.open_file(filename, folder_path, "rb")
-            if sha256_hash is None:
-                return None
-
-            self.__server_hash = binary_2_hex(xor(self.__server_hash, sha256_hash))
-
-        except Exception as e:
-            print(YELLOW_COLOR, "The file doesn't exist", WHITE_COLOR)
-            return None
-        return True
 
     def get_server_hash(self):
         return self.__server_hash
