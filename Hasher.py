@@ -211,5 +211,4 @@ class Hasher:
 
     def automatic_update_hash_server(self):
         self.check_if_server_updated()
-        print(self.__server_hash)
         threading.Timer(UPDATE_TIMER, self.automatic_update_hash_server).start()
