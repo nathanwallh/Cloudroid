@@ -95,7 +95,6 @@ class ProxyThread( threading.Thread ):
 
 # Check consistency of server with others on network
     def consistency_check( self ):
-        DEBUG("consistency_check: start")
         threshold = round( self.network.size() * CONSISTENCY_THRESHOLD )
         network_hashes = self.get_hashes()
         for server_hash in network_hashes:
@@ -103,103 +102,79 @@ class ProxyThread( threading.Thread ):
                 threshold -= 1
     # Server is consistent
         if threshold > 0:
-            DEBUG("found to be consistent")
             return
     # Server is not consistent
-        DEBUG("found to be not consistent")
         occurrences_list = []
         for hsh in network_hashes:
             occurrences = len( [h[1] for h in network_hashes if h[1] == hsh[1]] )
             occurrences_list.append(  ( hsh[0], occurrences) )
         max_occur = max( occurrences_list, key=lambda tup: tup[1] )
         self.not_consistent( [ self.network.get_server_sock( max_occur[0] ) ] )
-        DEBUG("consistency_check: end")
         return
     
 
 
 # Update all server files from a single server
     def not_consistent( self, server_sock ):
-        DEBUG("not_consistent: start")
         rmtree(USER_DIR)
         mkdir(USER_DIR)
         self.network.net_send(b"USER guest\r\n", server_sock)
         inpt = self.network.net_recv( server_sock )
-        DEBUG("inpt = " + inpt.decode() )
         self.network.net_send(b"PASS guest\r\n", server_sock)
         inpt = self.network.net_recv( server_sock )
-        DEBUG("inpt = " + inpt.decode() )
         files = self.get_file_list( server_sock )
-        DEBUG("files to get = " + str( files ) )
         for f in files:
             self.retrieve_file( f, server_sock )
         self.anon_login( server_sock )
-        DEBUG("not_consistent: end")
 
 
 
 # Get the files list of a single server
     def get_file_list( self, server_sock ):
-        DEBUG("get_file_list: start")
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.curr_cmd = "epsv"
         inpt = self.network.net_recv( server_sock )
-        DEBUG("inpt = " + inpt.decode() )
         self.network.curr_cmd = ""
         self.network.net_send(b"LIST\r\n", server_sock)
         inpt = self.network.net_recv( server_sock )
-        DEBUG("inpt = " + inpt.decode() )
         file_list = self.network.read_data_buffers( server_sock )[0]
         inpt = self.network.net_recv( server_sock )
-        DEBUG("inpt = " + inpt.decode() )
         raw_file_list = file_list.decode().split("\n")[:-1]
         clean_file_list = list()
         for f in raw_file_list:
             clean_file_list.append( f.split()[-1] )
-        DEBUG("get_file_list: end")
         return clean_file_list
 
 
 
 # Retrieve a file from a single server
     def retrieve_file( self, filename, server_sock ):
-        DEBUG("retrieve_file: start ")
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.curr_cmd = "epsv"
-        inpt = self.network.net_recv( server_sock  )
-        DEBUG("inpt = " + inpt.decode() )
+        self.network.net_recv( server_sock  )
         self.network.curr_cmd = ""
         self.network.net_send(b"RETR " + filename.encode() + b"\r\n", server_sock)
         inpt = self.network.net_recv( server_sock )
-        DEBUG("inpt = " + inpt.decode() )
         file_data = self.network.read_data_buffers( server_sock )[0]
-        DEBUG("file_data = " + str(file_data) )
-        inpt = self.network.net_recv( server_sock )
-        DEBUG("inpt = " + inpt.decode() )
+        if b'226' not in inpt: 
+            self.network.net_recv( server_sock )
         with open( USER_DIR + "/" + filename, "w" ) as f:
             f.write( file_data.decode() )
-        DEBUG("retrieve_file: end")
     
 
 
 # Get all server hashes on the EXTERNAL network
     def get_hashes( self ):
-        DEBUG("get_hashes: start")
         self.anon_login()
         self.network.net_send( b"EPSV\r\n", self.network.external )
         self.network.curr_cmd = "epsv"
-        inpt = self.network.net_recv( self.network.external )
-        DEBUG("inpt = " + inpt.decode() )
+        self.network.net_recv( self.network.external )
         self.network.curr_cmd = ""
         self.network.net_send( b"RETR " + HASH_FILE +b"\r\n", self.network.external )
         inpt = self.network.net_recv( self.network.external )
-        DEBUG("inpt = " + inpt.decode() )
         hashlist = self.network.retrieve_hash_tuples()
-        DEBUG("hashlist = " + str( hashlist ) )
-        DEBUG("external = " + str( self.network.external ) )
-        inpt = self.network.net_recv( self.network.external )
-        DEBUG("inpt = " + inpt.decode() )
-        DEBUG("get_hashes: end")
+        if b'226' not in inpt:
+            self.network.net_recv( self.network.external )
         return hashlist
 
 
@@ -207,16 +182,12 @@ class ProxyThread( threading.Thread ):
 
 # Login to all servers on network as anonymous
     def anon_login( self, Servers=None  ):
-        DEBUG("anon_login: start")
         if Servers == None:
             Servers = self.network.external
         self.network.net_send(b"USER anonymous\r\n", Servers)
         inpt = self.network.net_recv( Servers )
-        DEBUG("inpt = " + inpt.decode() )
         self.network.net_send(b"PASS anonymous\r\n", Servers)
         inpt = self.network.net_recv( Servers )
-        DEBUG("inpt = " + inpt.decode() )
-        DEBUG("anon_login: end")
         return
 
 
