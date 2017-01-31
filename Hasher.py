@@ -3,7 +3,6 @@ from hashlib import sha256
 from os import listdir, remove
 from os.path import isfile, isdir, join, split
 from sys import exc_info
-import asyncio
 import threading
 
 #
@@ -11,6 +10,7 @@ BLOCK_SIZE = 256
 YELLOW_COLOR = '\033[93m'
 WHITE_COLOR = '\033[0m'
 UPDATE_TIMER = 3
+ROOT_FOLDER = 'user_files'
 
 hex_2_binary = lambda hex_str: \
         bin(int('1' + hex_str, 16))[3:]
@@ -51,11 +51,10 @@ class Hasher:
         self.hasher = sha256()
         self.__sha_size = 256
         self.__hasher_filename = "Hash/ServerHash.txt"
-        self.__server_hash = "0"
+        self.__server_hash = '0' * (self.__sha_size >> 2)
         self.check_if_server_updated()
 
         self.automatic_update_hash_server()
-
 
     def read_hash_server_file(self):
         self.__server_hash = '0' * (self.__sha_size >> 2)
@@ -93,17 +92,21 @@ class Hasher:
     def check_if_server_updated(self):
         server_hash = '0' * (self.__sha_size >> 2)
 
-        # try:
-        #     for name_folder in listdir():
-        #         if name_folder != self.__hasher_filename.split("/")[0] and isdir(name_folder) and '.' not in name_folder:
-        #             for filename in listdir(name_folder):
         try:
-            name_folder = "user_files"
-            for filename in listdir(name_folder):
-                sha256_hash = self.open_file(filename, name_folder, "rb")
-                if sha256_hash is None:
-                    return False
-                server_hash = binary_2_hex(xor(server_hash, sha256_hash))
+            for folder_or_file_name in listdir(ROOT_FOLDER):
+                if isfile(join(ROOT_FOLDER, folder_or_file_name)):
+                    filename = folder_or_file_name
+                    sha256_hash = self.open_file(filename, ROOT_FOLDER, "rb")
+                    if sha256_hash is None:
+                        return False
+                    server_hash = binary_2_hex(xor(server_hash, sha256_hash))
+                elif isdir((join(ROOT_FOLDER, folder_or_file_name))):
+                    name_folder = join(ROOT_FOLDER, folder_or_file_name)
+                    for filename in listdir(name_folder):
+                        sha256_hash = self.open_file(filename, name_folder, "rb")
+                        if sha256_hash is None:
+                            return False
+                        server_hash = binary_2_hex(xor(server_hash, sha256_hash))
         except Exception as e:
             exception_handling(str(e))
             return False
@@ -208,15 +211,5 @@ class Hasher:
 
     def automatic_update_hash_server(self):
         self.check_if_server_updated()
+        print(self.__server_hash)
         threading.Timer(UPDATE_TIMER, self.automatic_update_hash_server).start()
-
-
-
-def main():
-    hsh = Hasher();
-
-
-if __name__ == "__main__":
-     main()
-
-
