@@ -196,6 +196,7 @@ class ProxyThread( threading.Thread ):
         DEBUG("inpt = " + inpt.decode() )
         hashlist = self.network.retrieve_hash_tuples()
         DEBUG("hashlist = " + str( hashlist ) )
+        DEBUG("external = " + str( self.network.external ) )
         inpt = self.network.net_recv( self.network.external )
         DEBUG("inpt = " + inpt.decode() )
         DEBUG("get_hashes: end")
