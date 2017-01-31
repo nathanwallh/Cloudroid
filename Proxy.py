@@ -138,7 +138,8 @@ class ProxyThread( threading.Thread ):
         self.network.net_send(b"LIST\r\n", server_sock)
         inpt = self.network.net_recv( server_sock )
         file_list = self.network.read_data_buffers( server_sock )[0]
-        inpt = self.network.net_recv( server_sock )
+        if b'226' not in inpt:
+            self.network.net_recv( server_sock )
         raw_file_list = file_list.decode().split("\n")[:-1]
         clean_file_list = list()
         for f in raw_file_list:
