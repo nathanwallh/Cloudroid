@@ -9,6 +9,7 @@
 USERS_FILE = "Uinfo.txt"
 CONSISTENCY_THRESHOLD = 0.7
 NETWORK_FILE = "Netinfo.txt"
+USER_DIR = "user_files/"
 BUF_SIZE = 2048
 PORT = 6000
 
@@ -31,68 +32,61 @@ class ProxyThread( threading.Thread ):
     def __init__( self, client ): 
         threading.Thread.__init__( self )
         self.curr_cmd = ''
-        self.user = ''
         self.filename = ''
         self.EPSV = False
         self.client = client
         self.network = FtpNet.FtpNet(NETWORK_FILE)
         self.hash = Hasher.Hasher()
-        self.consistency_check()
-        self.repeater = threading.Thread( target=self.localhost_repeater )
-        self.repeater.daemon = True
+#        self.consistency_check()
         print("Completed connection to servers")
 
 
 # Serve the client
     def run( self ):
         self.send_client(b'220 FTPnetwork\r\n')
-        self.repeater.start()
         
         while True:
-        # Get input from the client
+            net_inpt = b''
+            local_inpt = b''
+        # Get inpt from the client
             cli_inpt = self.get_raw_inpt()
             print( "Client says: ", cli_inpt.decode() ) 
             if not cli_inpt:
                 break
             self.curr_cmd = cli_inpt[:4].decode().strip().lower()
             self.network.curr_cmd = self.curr_cmd
-        
+            
+            if (self.curr_cmd == "stor" or self.curr_cmd == "list" or self.curr_cmd == "retr") \
+                and self.EPSV == False:
+                self.send_client(b"503 Can't do it before you send EPSV.\r\n")
+                continue
+
         # Send the client's input to the network
-            if self.curr_cmd == "list" or self.curr_cmd =="retr":
-                self.network.net_send(cli_inpt, self.network.local)
-            else:
-                self.network.net_send(cli_inpt)
-        
-        # Handling special commands
-            if self.curr_cmd == "user":
-                self.user = cli_inpt[5:].decode().strip()
-            elif self.curr_cmd == "quit":
+            self.network.net_send( cli_inpt )
+            net_inpt = self.network.net_recv()
+            
+            print("Network says: " + net_inpt.decode() )
+            self.send_client( net_inpt )
+
+            if self.curr_cmd == "quit":
                 self.client.close()
                 break 
             elif self.curr_cmd == "epsv":
                 self.EPSV = True;
-            elif self.curr_cmd == "stor":
-                self.filename = "user_files/" + cli_inpt[5:].decode().strip()
-                if self.EPSV == True:
-                    self.STOR()
             elif self.curr_cmd == "list" or self.curr_cmd == "retr":
-                if self.EPSV == True:
-                    self.LISTRETR()
-            
-            if self.EPSV == True and \
-                (self.curr_cmd == "stor" or self.curr_cmd == "list" or self.curr_cmd =="retr"):
+                local_inpt = self.network.local_recv()
+                net_inpt = self.network.net_recv( self.network.external )
+                self.network.get_code( local_inpt )
+            elif self.curr_cmd == "stor":
+                filename = USER_DIR + cli_inpt[5:].decode().strip()
+                local_inpt = self.network.local_recv()
+                self.network.send_file( filename )
+                net_inpt = self.network.net_recv( self.network.external )
+            if local_inpt:
+                print("Network says: " + local_inpt.decode() )
+                self.send_client( local_inpt )
                 self.EPSV = False
         
-        # Get input from network
-            self.network.net_recv( self.network.external )
-        
-
-# A thread that recieves data from the local FTP and sends it to the user
-    def localhost_repeater( self ):
-        while True:
-            server_response = self.network.local_recv()
-            print("Network says: " + server_response.decode())
-            self.send_client( server_response )
 
 
 # Check consistency of server with others on network
@@ -194,16 +188,6 @@ class ProxyThread( threading.Thread ):
 
 
 
-    def LISTRETR( self ):
-        self.network.close_data_connections()
-        return ''
-    
-
-
-    def STOR( self ):
-        self.network.send_file( self.filename )
-        return ''
-   
 
 # Send raw data to client's control connection
     def send_client( self, raw_data ):

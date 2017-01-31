@@ -58,7 +58,10 @@ class FtpNet:
 # Close all data connections
     def close_data_connections( self ):
         for data_s in self.data_sockets:
-            data_s.close()
+            try:
+                data_s.close()
+            except Exception:
+                pass
         self.data_sockets = []
 
 
@@ -77,7 +80,6 @@ class FtpNet:
                 data_s.close()
             except Exception as e:
                 print("connection broke down with " + data_s.getpeername()[0])
-        self.read_226( Servers )
         return data
 
 
@@ -91,7 +93,6 @@ class FtpNet:
                 except:
                     print("Problem in sending data")
         self.data_sockets = []
-        self.read_226( self.external )
 
 
 # Receive input from all external servers after a data command was completed, and check that they all sent 226 as the return code.    
@@ -105,6 +106,7 @@ class FtpNet:
 
 # Make data connection with all addresses in self.data_addresses
     def make_data_connections( self, data_addresses):
+        self.close_data_connections()
         for addr in data_addresses:
             data_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
             try:
@@ -131,9 +133,10 @@ class FtpNet:
 # Recieve data from list of servers.
     def net_recv( self, Servers=None ):
         if Servers == None:
-            Servers = self.external
+            Servers = self.servers
         if self.curr_cmd == "epsv":
-            return self.net_recv_EPSV( Servers )
+            self.net_recv_EPSV( self.external )
+            return self.local_recv() 
         total = list()
         for server in Servers:
             raw_inpt = self.get_raw_input( server )
