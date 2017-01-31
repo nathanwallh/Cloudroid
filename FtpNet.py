@@ -138,7 +138,7 @@ class FtpNet:
         if self.curr_cmd == "epsv":
             self.net_recv_EPSV( self.external )
             if self.cons_check == True:
-                return ''
+                return b''
             else:
                 return self.local_recv()
         total = list()
