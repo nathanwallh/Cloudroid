@@ -142,8 +142,8 @@ class ProxyThread( threading.Thread ):
         self.network.curr_cmd = ""
         self.network.net_send(b"LIST\r\n", server_sock)
         self.network.net_recv( server_sock )
-        file_List = self.network.read_data_buffers()
-        raw_file_list = file_List.decode().split("\n")[:-1]
+        file_list = self.network.read_data_buffers( server_sock )[0]
+        raw_file_list = file_list.decode().split("\n")[:-1]
         clean_file_list = list()
         for f in raw_file_list:
             clean_file_list.append( f.split()[-1] )
@@ -152,14 +152,14 @@ class ProxyThread( threading.Thread ):
 
 
 # Retrieve a file from a single server
-    def retrieve__file( self, filename, server_sock ):
+    def retrieve_file( self, filename, server_sock ):
         self.network.net_send(b"EPSV\r\n", server_sock)
         self.network.curr_cmd = "epsv"
         self.network.net_recv( server_sock  )
         self.network.curr_cmd = ""
         self.network.net_send(b"RETR " + filename.encode() + b"\r\n", server_sock)
         self.network.net_recv( server_sock )
-        file_data = self.network.read_data_buffers( server_sock )
+        file_data = self.network.read_data_buffers( server_sock )[0]
         with open( "user_files/" + filename, "w" ) as f:
             f.write( file_data.decode() )
     

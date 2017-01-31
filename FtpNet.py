@@ -49,10 +49,10 @@ class FtpNet:
 # Read all hashes from the data sockets and return them as a list with ports
     def retrieve_hash_tuples( self ):
         hash_tuples = []
-        addresses = [address[0] for address in self.data_sockets]
+        addresses = [address.getpeername()[0] for address in self.data_sockets]
         hashes = self.read_data_buffers( self.external )
         hash_tuples = zip( addresses, hashes )
-        return hash_tuples
+        return list(hash_tuples)
 
 
 # Close all data connections
@@ -69,7 +69,7 @@ class FtpNet:
             d_sockets = self.data_sockets
         else:
             d_sockets = [d_socket for d_socket in self.data_sockets if \
-                d_socket[0] in [ s[0] for s in Servers ] ]
+                d_socket.getpeername()[0] in [ s.getpeername()[0] for s in Servers ] ]
         for data_s in d_sockets:
             try:
                 data.append( data_s.recv(BUF_SIZE) )
@@ -119,7 +119,6 @@ class FtpNet:
     def net_send( self, buf, Servers=None ):
         if Servers==None:
             Servers = self.servers
-
         for server in Servers:
             try:
                 server.send( buf )
@@ -132,7 +131,7 @@ class FtpNet:
 # Recieve data from list of servers.
     def net_recv( self, Servers=None ):
         if Servers == None:
-            Server = self.external
+            Servers = self.external
         if self.curr_cmd == "epsv":
             return self.net_recv_EPSV( Servers )
         total = list()
