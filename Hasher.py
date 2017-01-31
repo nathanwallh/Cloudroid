@@ -32,7 +32,7 @@ def exception_handling(error_str):
 
 
 def save_file(filename, folder_path):
-    print("Please write the data fie")
+    print("Please write the data file")
     file_input = input()
     data = ""
     while file_input:
@@ -172,7 +172,7 @@ class Hasher:
             if not isfile(filename_path):
                 raise FileNotFoundError
         except FileNotFoundError as e:
-            print(YELLOW_COLOR, "The file isn't exist!!", WHITE_COLOR)
+            print(YELLOW_COLOR, "The file doesn't exist!!", WHITE_COLOR)
             return None
 
         try:
@@ -202,7 +202,7 @@ class Hasher:
             self.__server_hash = binary_2_hex(xor(self.__server_hash, sha256_hash))
 
         except Exception as e:
-            print(YELLOW_COLOR, "The file is exist!!", WHITE_COLOR)
+            print(YELLOW_COLOR, "The file doesn't exist", WHITE_COLOR)
             return None
         return True
 
@@ -211,5 +211,4 @@ class Hasher:
 
     def automatic_update_hash_server(self):
         self.check_if_server_updated()
-        print(self.__server_hash)
         threading.Timer(UPDATE_TIMER, self.automatic_update_hash_server).start()
