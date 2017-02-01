@@ -64,6 +64,9 @@ class ProxyThread( threading.Thread ):
                 self.send_client(b"503 Can't do it before you send EPSV.\r\n")
                 print("Network says: 503 Can't do it before you send EPSV.\r\n")
                 continue
+            elif self.curr_cmd == "port" or self.curr_cmd == "pasv" or self.curr_cmd == "eprt":
+                self.send_client(b"502 Command not implemented.\r\n")
+                continue
 
         # Send the client's input to the network
             self.network.net_send( cli_inpt )
@@ -79,6 +82,7 @@ class ProxyThread( threading.Thread ):
                 self.EPSV = True;
             elif self.curr_cmd == "list" or self.curr_cmd == "retr":
                 local_inpt = self.network.local_recv()
+                self.network.read_data_buffers()
                 net_inpt = self.network.net_recv( self.network.external )
                 self.network.get_code( local_inpt )
             elif self.curr_cmd == "stor":
