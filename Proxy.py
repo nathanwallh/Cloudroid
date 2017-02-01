@@ -39,7 +39,7 @@ class ProxyThread( threading.Thread ):
         self.network = FtpNet.FtpNet(NETWORK_FILE)
         self.hash = Hasher.Hasher()
         self.network.is_consistency_check = True
-        #self.consistency_check()
+        self.consistency_check()
         self.network.is_consistency_check = False
         print("Completed connection to servers")
 
@@ -140,8 +140,7 @@ class ProxyThread( threading.Thread ):
         self.network.net_send(b"LIST\r\n", server_sock)
         inpt = self.network.net_recv( server_sock )
         file_list = self.network.read_data_buffers( server_sock )[0]
-        if b'226' not in inpt:
-            self.network.net_recv( server_sock )
+        self.network.net_recv( server_sock )
         raw_file_list = file_list.decode().split("\n")[:-1]
         clean_file_list = list()
         for f in raw_file_list:
@@ -159,8 +158,7 @@ class ProxyThread( threading.Thread ):
         self.network.net_send(b"RETR " + filename.encode() + b"\r\n", server_sock)
         inpt = self.network.net_recv( server_sock )
         file_data = self.network.read_data_buffers( server_sock )[0]
-        if b'226' not in inpt: 
-            self.network.net_recv( server_sock )
+        self.network.net_recv( server_sock )
         with open( USER_DIR + "/" + filename, "w" ) as f:
             f.write( file_data.decode() )
     
@@ -176,8 +174,7 @@ class ProxyThread( threading.Thread ):
         self.network.net_send( b"RETR " + HASH_FILE +b"\r\n", self.network.external )
         inpt = self.network.net_recv( self.network.external )
         hashlist = self.network.retrieve_hash_tuples()
-        if b'226' not in inpt:
-            self.network.net_recv( self.network.external )
+        self.network.net_recv( self.network.external )
         return hashlist
 
 
