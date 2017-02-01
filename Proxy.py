@@ -39,7 +39,7 @@ class ProxyThread( threading.Thread ):
         self.network = FtpNet.FtpNet(NETWORK_FILE)
         self.hash = Hasher.Hasher()
         self.network.is_consistency_check = True
-        self.consistency_check()
+#        self.consistency_check()
         self.network.is_consistency_check = False
         print("Completed connection to servers")
 
