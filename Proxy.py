@@ -98,7 +98,7 @@ class ProxyThread( threading.Thread ):
         threshold = round( self.network.size() * CONSISTENCY_THRESHOLD )
         network_hashes = self.get_hashes()
         for server_hash in network_hashes:
-            if self.hash.isEqual( server_hash[1] ) == False:
+            if self.hash.get_server_hash() != server_hash[1]:
                 threshold -= 1
     # Server is consistent
         if threshold > 0:
