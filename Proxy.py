@@ -38,9 +38,9 @@ class ProxyThread( threading.Thread ):
         self.client = client
         self.network = FtpNet.FtpNet(NETWORK_FILE)
         self.hash = Hasher.Hasher()
-        self.network.cons_check = True
-        self.consistency_check()
-        self.network.cons_check = False
+        self.network.is_consistency_check = True
+        #self.consistency_check()
+        self.network.is_consistency_check = False
         print("Completed connection to servers")
 
 
@@ -50,7 +50,7 @@ class ProxyThread( threading.Thread ):
         
         while True:
             net_inpt = b''
-            local_inpt = b''
+            net_inpt2 = b''
         # Get inpt from the client
             cli_inpt = self.get_raw_inpt()
             print( "Client says: ", cli_inpt.decode() ) 
@@ -81,18 +81,16 @@ class ProxyThread( threading.Thread ):
             elif self.curr_cmd == "epsv":
                 self.EPSV = True;
             elif self.curr_cmd == "list" or self.curr_cmd == "retr":
-                local_inpt = self.network.local_recv()
                 self.network.read_data_buffers()
-                net_inpt = self.network.net_recv( self.network.external )
-                self.network.get_code( local_inpt )
+                net_inpt2 = self.network.net_recv( )
             elif self.curr_cmd == "stor":
                 filename = USER_DIR + "/" +cli_inpt[5:].decode().strip()
-                local_inpt = self.network.local_recv()
+                net_inpt2 = self.network.local_recv()
                 self.network.send_file( filename )
-                net_inpt = self.network.net_recv( self.network.external )
-            if local_inpt:
-                print("Network says: " + local_inpt.decode() )
-                self.send_client( local_inpt )
+                self.network.net_recv( self.network.external )
+            if net_inpt2:
+                print("Network says: " + net_inpt2.decode() )
+                self.send_client( net_inpt2 )
                 self.EPSV = False
         
 

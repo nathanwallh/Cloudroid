@@ -17,13 +17,13 @@ class FtpNet:
         self.servers = list()
         self.data_sockets = list()
         self.curr_cmd = '' 
-        self.cons_check = False
+        self.is_consistency_check = False
         self.data_addresses = list()
         self.external = list()
         self.local = list()
         self.connect_to_network( netfile )
-        self.external = [server for server in self.servers if server.getpeername()[0]!='127.0.0.1']
-        self.local = [server for server in self.servers if server.getpeername()[0]=='127.0.0.1']
+        self.external = [server for server in self.servers if server[0].getpeername()[0]!='127.0.0.1']
+        self.local = [server for server in self.servers if server[0].getpeername()[0]=='127.0.0.1']
 
 
 # Connect to the addresses in netfile
@@ -35,7 +35,7 @@ class FtpNet:
             server_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
             try:
                 server_sock.connect( comp )
-                self.servers.append( server_sock )
+                self.servers.append( (server_sock,server_sock.makefile() ) )
             except (socket.gaierror,socket.timeout,ConnectionRefusedError,OSError):
                 print("connection to " + str(comp) + " has failed")
         for server in self.servers:
@@ -43,7 +43,7 @@ class FtpNet:
             if not code:
                 continue
             if code != "220":
-                print("connection to FTP server at" + str( server.getpeername() ) + " has failed")
+                print("connection to FTP server at" + str( server[0].getpeername() ) + " has failed")
                 self.servers.remove( server )
 
 
@@ -73,7 +73,7 @@ class FtpNet:
             d_sockets = self.data_sockets
         else:
             d_sockets = [d_socket for d_socket in self.data_sockets if \
-                d_socket.getpeername()[0] in [ s.getpeername()[0] for s in Servers ] ]
+                d_socket.getpeername()[0] in [ s[0].getpeername()[0] for s in Servers ] ]
         for data_s in d_sockets:
             try:
                 data.append( data_s.recv(BUF_SIZE) )
@@ -124,7 +124,7 @@ class FtpNet:
             Servers = self.servers
         for server in Servers:
             try:
-                server.send( buf )
+                server[0].send( buf )
             except( socket.gaierror, socket.timeout ):
                 print("Failed sending to one of the servers")
                 self.servers.remove ( server )
@@ -137,16 +137,17 @@ class FtpNet:
             Servers = self.servers
         if self.curr_cmd == "epsv":
             self.net_recv_EPSV( self.external )
-            if self.cons_check == True:
+            if self.is_consistency_check == True:
                 return b''
             else:
                 return self.local_recv()
-        total = list()
+        input_list= list()
         for server in Servers:
             raw_inpt = self.get_raw_input( server )
-            total.append( raw_inpt )
-        total = list( set( total ) )
-        return b'\n'.join( total )
+            input_list.append( raw_inpt )
+# This is just for debugging purposes
+        input_list = list( set( input_list ) )
+        return input_list[0]
 
 
 # Save all ports for data connection and send back only the localhost port 
@@ -154,21 +155,20 @@ class FtpNet:
         if Servers == None:
             Servers = self.external
         data_addresses = []
-        total = list()
+        input_list = list()
         for server in Servers:
             raw_inpt = self.get_raw_input( server )
-            total.append( raw_inpt )
+            input_list.append( raw_inpt )
             code = self.get_code( raw_inpt )
             if code != "229":
-                print("Server: " + str( server.getpeername() ) +" failed with EPSV")
-                total = total[:-1]
+                print("Server: " + str( server[0].getpeername() ) +" failed with EPSV")
+                input_list = input_list[:-1]
             else:
                 port = int( raw_inpt.decode()[3:].split("|")[-2] )
-                data_addresses.append( (server.getpeername()[0], port) )
-    # There are 2 cases corresponding to whether EPSV was sent as a part of consistency check or not.
+                data_addresses.append( (server[0].getpeername()[0], port) )
+# This is only for debugging purposes
+        input_list = list( set( input_list ) )
         self.make_data_connections( data_addresses )
-        total = list( set( total ) )
-        return b'\n'.join( total )
 
 
 
@@ -185,12 +185,12 @@ class FtpNet:
     def get_raw_input( self, server ):
             while True:
                 try:
-                    inpt = server.recv( 256 )
+                    inpt = server[1].readline().encode()
                     if not inpt:
                         raise ValueError("EOF")
                     break
                 except (ValueError,socket.timeout) as e:
-                    print("connection broke down with " + str( server.getpeername() ) )
+                    print("connection broke down with " + str( server[0].getpeername() ) )
                     self.servers.remove( server )
                     inpt = b''
                     break
@@ -205,7 +205,7 @@ class FtpNet:
 
 
     def get_server_sock( self, serverIP ):
-            return [ sock for sock in self.servers if sock.getpeername()[0]==serverIP ][0]
+            return [ sock for sock in self.servers if sock[0].getpeername()[0]==serverIP ][0]
 
 
     def local_recv( self ):
