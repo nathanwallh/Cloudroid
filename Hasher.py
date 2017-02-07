@@ -5,7 +5,6 @@ from os.path import isfile, isdir, join, split
 from sys import exc_info
 import threading
 
-#
 BLOCK_SIZE = 256
 YELLOW_COLOR = '\033[93m'
 WHITE_COLOR = '\033[0m'
