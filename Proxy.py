@@ -6,7 +6,6 @@
 # The first server to run should be the FTP server( Server.py )
 # Then, after running the proxy, an FTP client can make a 
 # connection through port 6000 and then things run as usual.
-USERS_FILE = "Uinfo.txt"
 CONSISTENCY_THRESHOLD = 0.7
 NETWORK_FILE = "Netinfo.txt"
 USER_DIR = "user_files"
@@ -20,12 +19,11 @@ def DEBUG(s):
         print(s)
 
 from os import mkdir
+from shutil import rmtree
 import threading
 import socket
 import FtpNet
-import UinfoFunc
 import Hasher
-from shutil import rmtree
 
 
 
@@ -67,7 +65,9 @@ class ProxyThread( threading.Thread ):
             elif self.curr_cmd == "port" or self.curr_cmd == "pasv" or self.curr_cmd == "eprt":
                 self.send_client(b"502 Command not implemented.\r\n")
                 continue
-
+            elif self.curr_cmd == "netw":
+                self.send_client(b"201 Network size is " + str( self.network.size() ).encode() + b".\r\n")
+                continue
         # Send the client's input to the network
             self.network.net_send( cli_inpt )
             net_inpt = self.network.net_recv()
@@ -144,7 +144,8 @@ class ProxyThread( threading.Thread ):
         raw_file_list = file_list.decode().split("\n")[:-1]
         clean_file_list = list()
         for f in raw_file_list:
-            clean_file_list.append( f.split()[-1] )
+            if f[0] != "d":
+                clean_file_list.append( f.split()[-1] )
         return clean_file_list
 
 

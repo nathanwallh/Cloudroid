@@ -6,18 +6,22 @@ from pyftpdlib.servers import FTPServer
 from os import mkdir
 from os import path
 from os import getcwd
-from UinfoFunc import get_all_usernames_from_file
 
 
 FTPPORT = 8000
-
+USER_DIR = "user_files"
+HASH_DIR = "Hash"
+USERNAME = "guest"
+USERPASS = "guest"
 
 # Add users from Uinfo.txt and create directories for them.
 auth = DummyAuthorizer()
-if path.exists("user_files") is False:
-    mkdir("user_files")
-auth.add_user("guest", "guest", './user_files', perm='elradfmw')
-auth.add_anonymous( getcwd() + '/Hash' )
+if path.exists(USER_DIR) is False:
+    mkdir(USER_DIR)
+if path.exists(HASH_DIR) is False:
+    mkdir(HASH_DIR)
+auth.add_user(USERNAME, USERPASS, './' + USER_DIR, perm='elradfmw')
+auth.add_anonymous( getcwd() + '/' + HASH_DIR )
 
 handler = FTPHandler
 handler.authorizer = auth

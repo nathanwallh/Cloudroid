@@ -5,6 +5,8 @@ from os.path import isfile, isdir, join, split
 from sys import exc_info
 import threading
 
+HASHDIR = "Hash"
+HASHFILE = "ServerHash.txt"
 BLOCK_SIZE = 256
 YELLOW_COLOR = '\033[93m'
 WHITE_COLOR = '\033[0m'
@@ -33,7 +35,7 @@ class Hasher:
     def __init__(self):
         self.hasher = sha256()
         self.__sha_size = 256
-        self.__hasher_filename = "Hash/ServerHash.txt"
+        self.__hasher_filename = HASHDIR + "/" + HASHFILE
         self.__server_hash = '0' * (self.__sha_size >> 2)
         self.export_hash_server_to_file()
         self.check_if_server_updated()
