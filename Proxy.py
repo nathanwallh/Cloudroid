@@ -7,7 +7,7 @@
 # Then, after running the proxy, an FTP client can make a 
 # connection through port 6000 and then things run as usual.
 CONSISTENCY_THRESHOLD = 0.7
-NETWORK_FILE = "Netinfo.txt"
+NETWORK_FILE = "peers.txt"
 USER_DIR = "user_files"
 BUF_SIZE = 2048
 PORT = 6000
@@ -86,8 +86,9 @@ class ProxyThread( threading.Thread ):
             elif self.curr_cmd == "stor":
                 filename = USER_DIR + "/" +cli_inpt[5:].decode().strip()
                 net_inpt2 = self.network.local_recv()
-                self.network.send_file( filename )
-                self.network.net_recv( self.network.external )
+                if self.network.size() > 1:
+                    self.network.send_file( filename )
+                    self.network.net_recv( self.network.external )
             if net_inpt2:
                 print("Network says: " + net_inpt2.decode() )
                 self.send_client( net_inpt2 )
