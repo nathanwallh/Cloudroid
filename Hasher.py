@@ -102,4 +102,3 @@ class Hasher:
     def automatic_update_hash_server(self):
         self.check_if_server_updated()
         threading.Timer(UPDATE_TIMER, self.automatic_update_hash_server).start()
-sh = Hasher()
