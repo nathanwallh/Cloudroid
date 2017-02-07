@@ -18,7 +18,6 @@ class FtpNet:
         self.data_sockets = list()
         self.curr_cmd = '' 
         self.is_consistency_check = False
-        self.data_addresses = list()
         self.external = list()
         self.local = list()
         self.connect_to_network( netfile )
@@ -105,7 +104,7 @@ class FtpNet:
 
 
 
-# Make data connection with all addresses in self.data_addresses
+# Make data connection with all addresses in data_addresses
     def make_data_connections( self, data_addresses):
         self.close_data_connections()
         for addr in data_addresses:

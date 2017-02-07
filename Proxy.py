@@ -97,6 +97,8 @@ class ProxyThread( threading.Thread ):
 
 # Check consistency of server with others on network
     def consistency_check( self ):
+        if self.network.size() == 1:
+            return
         threshold = round( self.network.size() * CONSISTENCY_THRESHOLD )
         network_hashes = self.get_hashes()
         for server_hash in network_hashes:
