@@ -133,14 +133,10 @@ class FtpNet:
 
 # Recieve data from list of servers.
     def net_recv( self, Servers=None ):
+        if self.curr_cmd == "epsv":
+            return self.net_recv_EPSV( Servers )
         if Servers == None:
             Servers = self.servers
-        if self.curr_cmd == "epsv":
-            self.net_recv_EPSV( self.external )
-            if self.is_consistency_check == True:
-                return b''
-            else:
-                return self.local_recv()
         input_list= list()
         for server in Servers:
             raw_inpt = self.get_raw_input( server )
@@ -148,6 +144,7 @@ class FtpNet:
 # This is just for debugging purposes
         input_list = list( set( input_list ) )
         return input_list[0]
+
 
 
 # Save all ports for data connection and send back only the localhost port 
@@ -169,9 +166,10 @@ class FtpNet:
 # This is only for debugging purposes
         input_list = list( set( input_list ) )
         self.make_data_connections( data_addresses )
-
-
-
+        if self.is_consistency_check == False:
+            return self.local_recv()
+        else:
+            return b''
 
 # Extract the code from the FTP servers response
     def get_code( self, raw_inpt ):
