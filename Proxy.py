@@ -44,7 +44,7 @@ class ProxyThread( threading.Thread ):
 
 # Serve the client
     def run( self ):
-        self.send_client(b'220 FTPnetwork\r\n')
+        self.send_client(b'220 Cloudroid\r\n')
         
         while True:
             net_inpt = b''
