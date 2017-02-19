@@ -7,7 +7,7 @@
 # Then, after running the proxy, an FTP client can make a 
 # connection through port 6000 and then things run as usual.
 CONSISTENCY_THRESHOLD = 0.7
-NETWORK_FILE = "peers.txt"
+NETWORK_FILE = "PEERS.txt"
 USER_DIR = "user_files"
 BUF_SIZE = 2048
 PORT = 6000

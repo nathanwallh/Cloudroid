@@ -1,0 +1,25 @@
+Cloudroid - Cloud storage on a network of Odroid devices.
+
+DESCRIPTION
+A basic cloud storage mechanism based on the FTP protocol, ideal for file sharing between multiple peers.
+It consists of FTP servers connected together remotely, where each server has it's own copy of shared files.
+FTP commands that are sent to one server, are broadcasted to every other server on the network, so that 
+the shared files remain consistent.
+
+
+Code and Architecture 
+The code is written in Python 3. For FTP server, we used the pyftpdlib library.
+
+
+#### CODE HERE ###
+
+
+How-to:
+Each server attempts to connect to the servers written in the file: peers.txt
+Then, it can be accessed via port 6000(default)
+### Pictures & Video here ###
+
+Developers:
+
+Nathan Wallheimer
+Oren Efraimov

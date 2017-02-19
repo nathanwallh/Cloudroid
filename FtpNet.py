@@ -3,7 +3,7 @@
 # FtpNet object
 # An object that represents the network of FTP servers.
 # It contains all methods for sending and recieveing FTP commands and data.
-
+FTP_PORT = 8000
 BUF_SIZE = 2048
 DEBUG_val = True
 def DEBUG(s):
@@ -29,7 +29,8 @@ class FtpNet:
     def connect_to_network( self, netfile ):
         with open( netfile, 'r' ) as f:
             raw_addr = f.read().split()
-        addresses = [ (address.split(':')[0],int(address.split(':')[1])) for address in raw_addr ]
+        addresses = [("127.0.0.1",FTP_PORT)] + [ (raw_addr[i],FTP_PORT) for i in range(0,len(raw_addr)) ] 
+        addresses = list(set(addresses))
         for comp in addresses:
             server_sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
             try:
