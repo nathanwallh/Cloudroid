@@ -6,18 +6,61 @@ It consists of FTP servers connected together remotely, where each server has it
 FTP commands that are sent to one server, are broadcasted to every other server on the network, so that 
 the shared files remain consistent.
 
+Protocol overview:
+A "Cloudroid" server consists of 2 processes running together:
+1. FTP server - Taken from the pyftpdlib library.
+2. Proxy server - Implemented by us.
 
-Code and Architecture 
-The code is written in Python 3. For FTP server, we used the pyftpdlib library.
+The proxy server is the client's gateway to the network, while the FTP server is only working in the background.
+When a client connection is made, the proxy server connects to every FTP server on the network. The network servers are listed in the file PEERS.txt.
+For the client, the network appears as a single FTP server, But behind the scenes, each FTP command that the client sends out is interpreted and broadcasted
+to the network by the Proxy server.
+The network can therefore be diagrammed as follows:
+##IMG## diagram.png ##/IMG##
+
+It should be noted that connections between proxy servers and FTP servers(or equivalently: between FTP clients and FTP servers), actually consist of 2 different connections:
+1. Control connection.
+2. Data connection.
+The control connection is used to send FTP commands and recieve return codes, while the data connection is used to send and recieve data(e.g: when sending files).
+Data connections are opened for client requests and they are disposable. For each session, many data connections might be opened and closed, but the control connection remain.
+This is a inherent part of the FTP protocol that the proxy server takes care of:
+It does so by creating data connection with all FTP servers in the network except of the local FTP server. The data connection of the local FTP server is redirected back to the client.
+Therefore, when the client sends data to the network, he actually sends it to one server. The proxy uses it's own data connections with the network to broadcast the data, right
+after the client has finished.
 
 
-#### CODE HERE ###
+Then, it runs a basic consistency check procedure. This procedure assures that the files in the shared directory are consistent with the files in the
+network. It will be described in further detail later.
+
+
+
+### CODE HERE ###
 
 
 How-to:
-Each server attempts to connect to the servers written in the file: peers.txt
-Then, it can be accessed via port 6000(default)
-### Pictures & Video here ###
+To run the server, execute: ##CODE## ./Server.py ##/CODE##
+Now the server is listening on port 6000 by default. 
+To create a client connection, it's best to use a telnet client, but any client will work. e.g:
+##CODE## telnet 127.0.0.1 6000 ##/CODE##
+
+After recieveing the 220 return code, the client needs to login with user name and password. By default, there's only one user is available and it's the guest user.
+To connect as guest, the client uses the following commands:
+##CODE## USER guest ##/CODE##
+##CODE## PASS guest ##/CODE##
+
+FTP commands can be divided into two types: commands that make use of the data connection(look up the protocol overview to understand what it means), and commands that don't.
+To open a data connection, the client needs to send the command: ##CODE## EPSV ##/CODE##, and the server will return a new port on which it listens for data.
+After having a data connection open, the client can send commands of the first type, such as:
+## RETR myfile.txt ##/CODE## - Retrieve a file named myfile.txt
+## STOR newfile.txt ##/CODE## - Store a new file named newfile.txt
+## LIST ## - List contents of the directory
+Note that data connections are disposable and therefore need to be opened before each command of the first type.
+Some useful commands of the second type include:
+##CODE## CWD ##/CODE## - Get the current working directory
+##CODE## DELE myfile.txt ##/CODE## - Delete a file named myfile.txt
+
+
+Pictures & Video here
 
 Developers:
 
