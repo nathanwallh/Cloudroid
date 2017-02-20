@@ -65,7 +65,7 @@ class ProxyThread( threading.Thread ):
             elif self.curr_cmd == "port" or self.curr_cmd == "pasv" or self.curr_cmd == "eprt":
                 self.send_client(b"502 Command not implemented.\r\n")
                 continue
-            elif self.curr_cmd == "netw":
+            elif self.curr_cmd == "nets":
                 self.send_client(b"201 Network size is " + str( self.network.size() ).encode() + b".\r\n")
                 continue
         # Send the client's input to the network
