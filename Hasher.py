@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# By Oren Efraimov
 from hashlib import sha256
 from os import listdir, remove
 from os.path import isfile, isdir, join, split

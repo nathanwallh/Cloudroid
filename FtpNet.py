@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+ 
 # FtpNet object
 # An object that represents the network of FTP servers.
 # It contains all methods for sending and recieveing FTP commands and data.
