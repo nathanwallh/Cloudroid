@@ -1,4 +1,7 @@
 # Cloudroid
+
+Project for the RBD lab, Haifa University.
+
 A cloud storage mechanism based on the FTP protocol.
 
 It consists of FTP servers that are connected in a network, and can be accessed by clients anywhere.
