@@ -58,6 +58,3 @@ Note that data connections are disposable and therefore need to be opened before
    The best thing to do is to write it again, but only after solving the first 2 issues we listed.
 
 4. Security was not taken care of in the protocol, but it should be. Possibly, using SFTP instead of FTP.
-
-
-## All rights reserved for the RBD lab, Haifa University.
