@@ -17,6 +17,7 @@
    - It's slow.
    - It doesn't check subdirectories recursively.
    - It works only in the beggining of a session while it should be running in specified time intervals.
+   
    The best thing to do is to write it again, but only after solving the first 2 issues we listed.
 
 4. Security was not taken care of in the protocol, but it should be. Possibly, using SFTP instead of FTP.
