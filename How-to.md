@@ -5,9 +5,9 @@ To join a network and start sharing files:<br>
 ![alt tag](http://sites.hevra.haifa.ac.il/rbd/wp-content/uploads/sites/63/2017/02/demo1.png)
 <br>
 <br>
-2. Run **./Server.py** command<br>
+2. Run **Server.py**<br>
 3. Connect to the server using telnet(or any other client):<br>
-**telnet 127.0.0.1 6000** command <br>
+**telnet 127.0.0.1 6000**<br>
 3. **After** recieveing the 220 return code, login as a guest:<br>
   **USER guest <br>
   PASS guest**<br>
