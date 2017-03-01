@@ -29,6 +29,7 @@ There must be a data connection open. <br>
 
 To open a data connection, the client needs to send the command:
 **EPSV**
+
 Then, the server responds with a port number for the data connection, and then the client should connect(using telnet again, for example).<br>
 Note that data connections are disposable and therefore need to be opened before each command of the first type.<br>
 
