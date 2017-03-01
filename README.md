@@ -33,8 +33,8 @@ There must be a data connection open. <br>
 **EPSV** Then, the server responds with a port number for the data connection, and then the client can open the data connection(using telnet again, for example).<br>
 Note that data connections are disposable and therefore need to be opened before each command of the first type.<br>
 
-
-[![Little red ridning hood](http://i.imgur.com/7YTMFQp.png)](https://www.youtube.com/embed/VlxFEtmz39" Little red riding hood - Click to Watch!")
+## Youtube video
+[![Everything Is AWESOME](http://www.interload.co.il/upload/7847117.png)](https://www.youtube.com/watch?v=VlxFEtmz39s)
 
 
 
