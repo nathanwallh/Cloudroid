@@ -4,7 +4,7 @@ Cloudroid
 To join a network and start sharing files:<br>
 1. Add IP addresses of servers in the network to the file **PEERS.txt**:<br>
 <img>demo1.png</IMG> <br>
-2. Run **./Server.py ** command<br>
+2. Run **'./Server.py'** command<br>
 3. Connect to the server using telnet(or any other client):<br>
 **telnet 127.0.0.1 6000** command <br>
 3. **After** recieveing the 220 return code, login as a guest:<br>
