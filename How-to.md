@@ -17,17 +17,18 @@ By default, only one user is available in the network, and all files reside in t
 **DELE myfile.txt** - Delete a file named myfile.txt <br>
 **NETS** - Get the size of the active network. It's not part of the FTP protocol(we added this command). <br>
 
-Note that FTP commands can be divided into two types: 
+FTP commands can be divided into two types: 
+
 commands that make use of the data connection, and commands that don't.
 
 To use a command of the first type, such as:
+
 **RETR myfile.txt** - Retrieve a file named myfile.txt <br>
 **STOR newfile.txt** - Store a new file named newfile.txt <br>
 **LIST** - List the contents of the shared directory <br>
 There must be a data connection open. <br>
 
-To open a data connection, the client needs to send the command:
-**EPSV**
+To open a data connection, the client needs to send the **EPSV** command.
 
 Then, the server responds with a port number for the data connection, and then the client should connect(using telnet again, for example).<br>
 Note that data connections are disposable and therefore need to be opened before each command of the first type.<br>
