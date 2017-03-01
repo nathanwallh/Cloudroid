@@ -1,4 +1,4 @@
-##How-to use
+##How-to
 To join a network and start sharing files:<br>
 1. Add IP addresses of servers in the network to the file **PEERS.txt**: <br>
 <br>
