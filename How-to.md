@@ -19,6 +19,7 @@ By default, only one user is available in the network, and all files reside in t
 
 Note that FTP commands can be divided into two types: 
 commands that make use of the data connection, and commands that don't.
+
 To use a command of the first type, such as:
 **RETR myfile.txt** - Retrieve a file named myfile.txt <br>
 **STOR newfile.txt** - Store a new file named newfile.txt <br>
