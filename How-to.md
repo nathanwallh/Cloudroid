@@ -5,12 +5,12 @@ First, make sure that you have installed pyftpdlib using pip3-python.
 To join a network and start sharing files:<br>
 1. Add IP addresses of servers in the network to the file **PEERS.txt**: <br>
 <br>
-![alt tag](http://sites.hevra.haifa.ac.il/rbd/wp-content/uploads/sites/63/2017/02/demo1.png)
+![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo1.png)
 <br>
 <br>
 2. Run **Server.py**<br>
 3. Connect to the server using telnet(or any other client):<br>
-**telnet 127.0.0.1 6000**<br>
+'''telnet 127.0.0.1 6000'''<br>
 3. After recieveing the 220 return code, login as a guest by sending the FTP commands:<br>
   **USER guest <br>
   PASS guest**<br>
