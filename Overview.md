@@ -3,7 +3,7 @@ A "Cloudroid" server consists of 2 processes running together: <br>
 - FTP server - Taken from the pyftpdlib library. <br>
 - Proxy server - Implemented by us. <br>
 The FTP server works in the background while the proxy server works in the front. The proxy accepts clients connections, broadcasts traffic to the network, and multiplexes replies to the client.<br>
-When a client connection is made, the proxy server connects to all FTP servers on the network. These servers are listed in the file PEERS.txt.<br>
+When a client connection is made, the proxy server connects to all FTP servers on the network. These servers are listed in the file ```PEERS.txt.```<br>
 Therefore, the network can be diagrammed as follows:
 ![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/diagram.png)
 
@@ -23,7 +23,7 @@ the data to the network.<br>
 
 Another important aspect of the protocol is a consistency check procedure that runs every time a new session with client begins.<br>
 This procedure ensures that the files in the shared directory of one server will be the same files in the shared directory of other servers in the network.<br>
-To decide if a server is consistent or not, a special parameter named CONSISTENCY_THRESHOLD is defined. It is a number between 0 to 1, that gives the percentile of servers allowed to differ 
+To decide if a server is consistent or not, a special parameter named ```CONSISTENCY_THRESHOLD``` is defined. It is a number between 0 to 1, that gives the percentile of servers allowed to differ 
 from the server under check.<br>
 To check the difference between local server and the network, the procedure is using FTP to retrieve the checksum of ``` user_files ```
 from all servers. Then, it compares them to the local hash.
