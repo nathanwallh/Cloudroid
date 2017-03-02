@@ -23,9 +23,9 @@ the data to the network.<br>
 
 Another important aspect of the protocol is a consistency check procedure that runs every time a new session with client begins.<br>
 This procedure ensures that the files in the shared directory of one server will be the same files in the shared directory of other servers in the network.<br>
-To decide if a server is consistent or not, a special parameter named CONSISTENCY_THRESHOLD is defined. It is a number between 0 to 1, that gives the percentile of servers allowed to differ<br>
+To decide if a server is consistent or not, a special parameter named CONSISTENCY_THRESHOLD is defined. It is a number between 0 to 1, that gives the percentile of servers allowed to differ 
 from the server under check.<br>
-To check the consistency of files, the procedure is using the FTP server to retrieve the checksum of ```user_files``` from all servers. Then, it compares them to the local hash.
+To check the difference between local server and the network, the procedure is using FTP to retrieve the checksum of ```user_files``` from all servers. Then, it compares them to the local hash.
 Checksums are stored in the ```ServerHash.txt``` file.
 
 </p>
