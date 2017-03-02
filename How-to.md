@@ -15,9 +15,10 @@ telnet 127.0.0.1 6000
 ```
 <br>
 3. After recieveing the 220 return code, login as a guest by sending the FTP commands:<br>
-  ```USER guest
+  ```USER guest```
 
-  PASS guest```<br>
+  ```PASS guest```
+
 By default, only one user is available in the network, and all files reside in the shared directory: "user_files". <br>
 4. Now it's possible to send FTP commands such as: <br>
 ```CWD``` - Get the current working directory <br>
