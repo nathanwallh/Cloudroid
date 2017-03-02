@@ -18,8 +18,8 @@ Data connections are opened when the client requests them using the FTP command:
 The way that the proxy server deals with it, is by creating data connection with all FTP servers in the network except of the local FTP server. The data connection of the local FTP server is redirected back to the client.<br>
 Therefore, when the client exchanges data with the network, he actually exchanges it with one server only. When he finishes, the proxy server uses it's own data connections with other servers to broadcast<br>
 the data to the network.<br>
-</p>
-<p>
+
+
 
 Another important aspect of the protocol is a consistency check procedure that runs every time a new session with client begins.<br>
 This procedure ensures that the files in the shared directory of one server will be the same files in the shared directory of other servers in the network.<br>
@@ -30,6 +30,6 @@ from all servers. Then, it compares them to the local hash.
 Checksums are stored in the ``` ServerHash.txt ```
 file.
 
-</p>
+
 
 
