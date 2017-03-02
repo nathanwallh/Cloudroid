@@ -2,8 +2,7 @@
 A "Cloudroid" server consists of 2 processes running together: <br>
 <li>FTP server - Taken from the pyftpdlib library. <br>
 <li>Proxy server - Implemented by us. <br>
-The FTP server works in the background while the proxy server works in the front. The proxy accepts clients connections, broadcasts<br>
-traffic to the network, and multiplexes replies to the client.<br>
+The FTP server works in the background while the proxy server works in the front. The proxy accepts clients connections, broadcasts traffic to the network, and multiplexes replies to the client.<br>
 When a client connection is made, the proxy server connects to all FTP servers on the network. These servers are listed in the file PEERS.txt.<br>
 The network can be diagrammed as follows:
 <p>
