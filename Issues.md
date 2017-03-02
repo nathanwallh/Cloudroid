@@ -3,8 +3,7 @@ There are several issues that we know of, and think that they should be fixed:
 
 
 1. If the client wants to run FTP commands that use the data connection(e.g STOR), he must be running a server on the same machine.
-   The reason for it is that the control connection and data connection must be, according to the FTP protocol, between the same  machines.
-   
+   The reason for it is that the control connection and data connection must be, according to the FTP protocol, between the same  machines. 
    But in the Cloudroid protocol, the control connection is between proxy server and FTP server, while the data connection is between the client and the FTP server.
    
    There are two possible solutions for this problem:
