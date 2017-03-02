@@ -15,8 +15,7 @@ There are several issues that we know of, and think that they should be fixed:
      machines.<br>
      The reason why this solution seems better, is that in future, there might be more constraints coming from the FTP protocol, and this solution will make it possible to fix them all.
 
-2. FTP commands are a little bit slow when there are many servers in the network. This problem is probably due to the commands passing through the proxy server first.
-   
+2. FTP commands are a little bit slow when there are many servers in the network. This problem is probably due to the commands passing through the proxy server first.<br>
    It can be solved using the second solution for the first problem. Ideally, the proxy server and the FTP server are combined into a single server program. Therefore, writing an FTP server
    that doesn't stick fully to the FTP protocol can be useful in doing so.
    
