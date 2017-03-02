@@ -3,7 +3,7 @@ There are several issues that we know of, and think that they should be fixed:
 
 
 1. If the client wants to run FTP commands that use the data connection(e.g STOR), he must be running a server on the same machine.
-   The reason for it is that the control connection and data connection must be, according to the FTP protocol, between the same  machines. 
+   The reason for it is that the control connection and data connection must be, according to the FTP protocol, between the same  machines.<br> 
    But in the Cloudroid protocol, the control connection is between proxy server and FTP server, while the data connection is between the client and the FTP server.
    
    There are two possible solutions for this problem:
@@ -12,8 +12,7 @@ There are several issues that we know of, and think that they should be fixed:
      send it back to the client.
 
    - A second possible solution, which is better in our opinion, is to write an FTP server that doesn't stick fully to the FTP protocol, and allows data connections with different
-     machines.
-
+     machines.<br>
      The reason why this solution seems better, is that in future, there might be more constraints coming from the FTP protocol, and this solution will make it possible to fix them all.
 
 2. FTP commands are a little bit slow when there are many servers in the network. This problem is probably due to the commands passing through the proxy server first.
