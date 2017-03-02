@@ -19,7 +19,7 @@ telnet 127.0.0.1 6000
 
   ```PASS guest```
 
-By default, only one user is available in the network, and all files reside in the shared directory: "user_files". <br>
+By default, only one user is available in the network, and all files reside in the shared directory: ```user_files```. <br>
 4. Now it's possible to send FTP commands such as: <br>
 ```CWD``` - Get the current working directory <br>
 ```DELE myfile.txt``` - Delete a file named myfile.txt <br>
@@ -34,7 +34,6 @@ To use a command of the first type, such as:<br>
 ```STOR newfile.txt``` - Store a new file named newfile.txt <br>
 ```LIST``` - List the contents of the shared directory <br>
 There must be a data connection open. <br>
-
 To open a data connection, the client needs to send the ```EPSV``` command.
 
 Then, the server responds with a port number for the data connection, and then the client should connect(using telnet again, for example).<br>
