@@ -9,6 +9,7 @@ To install python3-pip run:```sudo apt-get install python3-pip```.
 
 To install pyftpdlib run: ```pip3 install pyftpdlib==1.5.1```.
 
+## Guide
 To join a network and start sharing files:<br>
 1. Add IP addresses of servers in the network to the file ```PEERS.txt```, seperated by newline: <br>
 <br>
@@ -33,7 +34,7 @@ By default, only one user is available in the network, and all files reside in t
 ```NETS``` - Get the size of the active network. It's not part of the FTP protocol(we added this command). <br>
 More FTP commands can be found on wikipedia.
 
-## Data connection
+### Data connection
 
 FTP commands can be divided into two types:<br>
 - commands that make use of the data connection.
