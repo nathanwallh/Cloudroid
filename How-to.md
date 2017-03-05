@@ -1,6 +1,6 @@
-#How-to
+# How-to
 
-# Requirements
+## Requirements
 Cloudroid uses the pyftpdlib library with python 3.
 
 pyftpdlib is installed via python3-pip.
@@ -33,7 +33,7 @@ By default, only one user is available in the network, and all files reside in t
 ```NETS``` - Get the size of the active network. It's not part of the FTP protocol(we added this command). <br>
 More FTP commands can be found on wikipedia.
 
-##Data connection
+## Data connection
 
 FTP commands can be divided into two types:<br>
 - commands that make use of the data connection.
