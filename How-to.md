@@ -1,9 +1,14 @@
+
+##Requirements
+To use the project have to install the package
+First, it is necessary to update the 'pip'
+'''pip install -U pip'''
+Later, you need to install the package ftplib
+'''pip install pyftpdlib==1.5.1'''
+
 ##How-to
-![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo3.jpg)
-<br><br>
-First, make sure that you have installed pyftpdlib using python3-pip.
-To install python3-pip, run ```sudo apt-get install python3-pip```.
-To install pyftpdlib, run ```pip3 install pyftpdlib```.
+First, make sure that you have installed pyftpdlib using pip3-python.
+
 
 To join a network and start sharing files:<br>
 1. Add IP addresses of servers in the network to the file ```PEERS.txt```: <br>
@@ -22,9 +27,6 @@ telnet 127.0.0.1 6000
 
   ```PASS guest```
 
-![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo4.png)
-<br>
-<br>
 By default, only one user is available in the network, and all files reside in the shared directory: ```user_files```. <br>
 4. Now it's possible to send FTP commands such as: <br>
 ```CWD``` - Get the current working directory <br>
@@ -41,12 +43,8 @@ To use a command of the first type, such as:<br>
 ```LIST``` - List the contents of the shared directory <br>
 There must be a data connection open. <br>
 To open a data connection, the client needs to send the ```EPSV``` command.
-![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo6.png)
-<br>
-<br>
+
 Then, the server responds with a port number for the data connection, and then the client should connect(using telnet again, for example).<br>
 Note that data connections are disposable and therefore need to be opened before each command of the first type.<br>
-![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo5.png)
-<br>
-<br>
+
 
