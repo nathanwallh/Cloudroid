@@ -1,4 +1,4 @@
-##How-to
+#How-to
 
 First, make sure that you have installed pyftpdlib using python3-pip.
 
@@ -30,7 +30,7 @@ By default, only one user is available in the network, and all files reside in t
 ```NETS``` - Get the size of the active network. It's not part of the FTP protocol(we added this command). <br>
 More FTP commands can be found on wikipedia.
 
-#Data connections
+##Data connection
 
 FTP commands can be divided into two types:<br>
 - commands that make use of the data connection.
