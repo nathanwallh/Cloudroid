@@ -8,7 +8,7 @@ To install python3-pip, run: ```sudo apt-get install python3-pip```.
 Then to install pyftpdlib, run: ```pip3 install pyftpdlib==1.5.1```.
 
 ## Guide
-To join a network and start sharing files:<br>
+
 1. Add IP addresses of servers in the network to the file ```PEERS.txt```, seperated by newline: <br>
 <br>
 ![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo1.png)
