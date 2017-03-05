@@ -13,9 +13,9 @@ To join a network and start sharing files:<br>
 <br>
 <br>
 2. Run ```Server.py```<br>
-3. Connect to the server using telnet(or any other client):<br>```telnet 127.0.0.1 6000```
+3. Connect to the server using telnet(or any other client): ```telnet 127.0.0.1 6000```
 <br>
-3. After recieveing the 220 return code, login as a guest by sending the FTP commands:<br>
+4. After recieveing the 220 return code, login as a guest by sending the FTP commands:<br>
   ```USER guest```
 
   ```PASS guest```
@@ -24,10 +24,13 @@ To join a network and start sharing files:<br>
 <br>
 <br>
 By default, only one user is available in the network, and all files reside in the shared directory: ```user_files```. <br>
-4. Now it's possible to send FTP commands such as: <br>
+5. Now it's possible to send FTP commands such as: <br>
 ```CWD``` - Get the current working directory <br>
 ```DELE myfile.txt``` - Delete a file named myfile.txt <br>
 ```NETS``` - Get the size of the active network. It's not part of the FTP protocol(we added this command). <br>
+More FTP commands can be found on wikipedia.
+
+#Data connections
 
 FTP commands can be divided into two types:<br>
 - commands that make use of the data connection.
