@@ -1,6 +1,9 @@
 #How-to
 
-First, make sure that you have installed pyftpdlib using python3-pip.
+# Requirements
+Cloudroid uses the pyftpdlib library with python 3.
+
+pyftpdlib is installed via python3-pip.
 
 To install python3-pip run:```sudo apt-get install python3-pip```.
 
