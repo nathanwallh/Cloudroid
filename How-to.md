@@ -13,10 +13,7 @@ To join a network and start sharing files:<br>
 <br>
 <br>
 2. Run ```Server.py```<br>
-3. Connect to the server using telnet(or any other client):<br>
-```
-telnet 127.0.0.1 6000
-```
+3. Connect to the server using telnet(or any other client):<br>```telnet 127.0.0.1 6000```
 <br>
 3. After recieveing the 220 return code, login as a guest by sending the FTP commands:<br>
   ```USER guest```
