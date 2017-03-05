@@ -1,9 +1,9 @@
 
 ##Requirements
-To use the project have to install the package
-First, it is necessary to update the 'pip'
+To use the project have to install the pyftpdlib's package. <br>
+First, it is necessary to update the 'pip':<br>
 ```pip install -U pip```
-Later, you need to install the package ftplib
+Later, you need to install the package ftplib:<br>
  ```pip install pyftpdlib==1.5.1 ```
 
 ##How-to
