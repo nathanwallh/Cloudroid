@@ -1,6 +1,5 @@
 ##How-to
-![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo3.jpg)
-<br><br>
+
 First, make sure that you have installed pyftpdlib using python3-pip.
 To install python3-pip, run ```sudo apt-get install python3-pip```.
 To install pyftpdlib, run ```pip3 install pyftpdlib```.
@@ -49,4 +48,5 @@ Note that data connections are disposable and therefore need to be opened before
 ![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo5.png)
 <br>
 <br>
-
+![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo3.jpg)
+<br><br>
