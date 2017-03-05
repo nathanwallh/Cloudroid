@@ -18,8 +18,7 @@ To join a network and start sharing files:<br>
 3. Connect to the server using telnet(or any other client): ```telnet 127.0.0.1 6000```
 <br>
 4. After recieveing the 220 return code, login as a guest by sending the FTP commands:<br>
-  ```USER guest```
-
+  ```USER guest``` <br>
   ```PASS guest```
 
 ![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo4.png)
