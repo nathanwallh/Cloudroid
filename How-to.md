@@ -4,7 +4,7 @@ First, make sure that you have installed pyftpdlib using python3-pip.
 
 To install python3-pip run:```sudo apt-get install python3-pip```.
 
-To install pyftpdlib run: ```pip3 install pyftpdlib```.
+To install pyftpdlib run: ```pip3 install pyftpdlib==1.5.1```.
 
 To join a network and start sharing files:<br>
 1. Add IP addresses of servers in the network to the file ```PEERS.txt```: <br>
