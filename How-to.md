@@ -9,6 +9,8 @@ Then to install pyftpdlib, run: ```pip3 install pyftpdlib==1.5.1```.
 
 ## Guide
 
+0. Download this repository to your computer.
+
 1. Add IP addresses of servers in the network to the file ```PEERS.txt```, seperated by newline:
 ![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo1.png)
 
