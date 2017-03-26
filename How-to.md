@@ -12,12 +12,9 @@ Then to install pyftpdlib, run: ```pip3 install pyftpdlib==1.5.1```.
 1. Add IP addresses of servers in the network to the file ```PEERS.txt```, seperated by newline:
 ![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo1.png)
 
-
 2. Run ```Server.py```
 
-
 3. Connect to the server using telnet(or any other client): ```telnet 127.0.0.1 6000```
-
 
 4. After recieveing the 220 return code, login as a guest by sending the FTP commands:
 
@@ -27,14 +24,9 @@ Then to install pyftpdlib, run: ```pip3 install pyftpdlib==1.5.1```.
 
 ![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo4.png)
 
-
-
-
 By default, only one user is available in the network, and all files reside in the shared directory: ```user_files```.
 
-
-5. Now it's possible to send FTP commands such as:
-
+5. Now you can to send FTP commands such as:
 
 ```CWD``` - Get the current working directory
 
@@ -65,12 +57,9 @@ To open a data connection, the client needs to send the ```EPSV``` command.
 
 ![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo6.png)
 
-
 Then, the server responds with a port number for the data connection, and then the client should connect(using telnet again, for example).
 
 ![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo5.png)
-
-
 
 Note that data connections are disposable and therefore need to be opened before each command of the first type.
 
