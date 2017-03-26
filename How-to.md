@@ -20,9 +20,8 @@ Then to install pyftpdlib, run: ```pip3 install pyftpdlib==1.5.1```.
 
 4. After recieveing the 220 return code, login as a guest by sending the FTP commands:
 
-  ```USER guest```
-  
-  ```PASS guest```
+- ```USER guest```  
+- ```PASS guest```
 
 ![alt tag](https://raw.githubusercontent.com/nathanwallh/Cloudroid/master/images/demo4.png)
 
@@ -30,11 +29,9 @@ By default, only one user is available in the network, and all files reside in t
 
 5. Now you can to send FTP commands such as:
 
-```CWD``` - Get the current working directory
-
-```DELE myfile.txt``` - Delete a file named myfile.txt
-
-```NETS``` - Get the size of the active network. It's not part of the FTP protocol(we added this command).
+- ```CWD``` - Get the current working directory
+- ```DELE myfile.txt``` - Delete a file named myfile.txt
+- ```NETS``` - Get the size of the active network. It's not part of the FTP protocol(we added this command).
 
 More FTP commands can be found on wikipedia.
 
@@ -47,11 +44,11 @@ FTP commands can be divided into two types:
 
 To use a command of the first type, such as:
 
-```RETR myfile.txt``` - Retrieve a file named myfile.txt
+-```RETR myfile.txt``` - Retrieve a file named myfile.txt
 
-```STOR newfile.txt``` - Store a new file named newfile.txt
+-```STOR newfile.txt``` - Store a new file named newfile.txt
 
-```LIST``` - List the contents of the shared directory 
+-```LIST``` - List the contents of the shared directory 
 
 There must be a data connection open. 
 
