@@ -12,7 +12,7 @@
      
      The reason for why this solution seems better, is that in future, there might be more constraints coming from the FTP protocol, and this solution will make it possible to fix them all. Also, at some point we might want to change the protocol and abandon the current FTPserver-Proxy model.
 
-2. The consistency check procedure has several issues:
+2. There are problems with the consistency check procedure:
    - It's slow.
    - It doesn't check subdirectories recursively.
    - It works only in the beggining of a session while it should be running in specified time intervals.
