@@ -1,4 +1,4 @@
-Cloudroid
+Cloudroid (project for university)
 =========
 A basic cloud storage mechanism based on the FTP protocol, ideal for file sharing between multiple peers.
 
